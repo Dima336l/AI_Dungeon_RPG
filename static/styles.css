@@ -13,6 +13,10 @@ body {
   user-select: none;
 }
 
+body {
+  cursor: url('/static/cursors/my-cursor.png') 4 4, auto;
+}
+
 #game-container {
   width: 600px;
   background: #222;

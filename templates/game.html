@@ -28,7 +28,7 @@
     const optionsElem = document.getElementById('options');
     const statusElem = document.getElementById('status-bar');
     const fullText = `{{ scene | safe }}`;
-    const optionsData = {{ options | tojson }};
+    const optionsData = {{ options | tojson | safe }};
     const beep = new Audio('{{ url_for("static", filename="beep.wav") }}');
 
     // Hide options and status initially
@@ -103,6 +103,7 @@
     });
   });
 </script>
+
 
 </body>
 </html>
