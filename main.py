@@ -1,14 +1,15 @@
+# app.py
+from flask import Flask, render_template, request, redirect, url_for, session
 import ollama
 import re
 from game.player import Player
 
-
+app = Flask(__name__)
+app.secret_key = 'your_secret_key_here'  # Needed for sessions
 
 MAX_HISTORY = 6
 
-
 def strip_markdown_bold(text):
-    # Removes **bold** markers
     return re.sub(r'\*\*(.*?)\*\*', r'\1', text)
 
 def generate_response(history):
@@ -16,11 +17,6 @@ def generate_response(history):
     return response['message']['content']
 
 def extract_options(ai_text):
-    """
-    Extract options from the AI's response.
-    Looks for lines starting with number + '.', ')', or '-'
-    Returns a dict mapping option number (int) to option text.
-    """
     options = {}
     pattern = re.compile(r'^\s*(\d+)[\.\)\-]\s*(.*)$')
     for line in ai_text.splitlines():
@@ -31,91 +27,62 @@ def extract_options(ai_text):
             options[num] = text
     return options
 
-def main():
-    player = Player()
-    print("Welcome to your AI Dungeon! Type 'exit' to quit or 'reset' to start a new game.\n")
+@app.route("/", methods=["GET", "POST"])
+def index():
+    if 'player' not in session:
+        session['player'] = Player().__dict__  # Save minimal player data
+        session['history'] = []
+        # initialize dungeon intro and first prompt here
+        dungeon_intro = {
+            'role': 'system',
+            'content': (
+                "You are a dungeon master guiding the player through a dark dungeon. "
+                "Always give 2 or 3 clear numbered options for the player to choose from. "
+                "Keep your responses short, punchy, and conversational. "
+                "Describe scenes briefly with vivid but minimal detail."
+            )
+        }
+        initial_prompt = "You're standing at the entrance of a dark dungeon. Say something short and natural, then give 3 simple numbered options for the player."
+        session['history'] = [dungeon_intro, {'role':'user', 'content':initial_prompt}]
+        # Generate initial AI response
+        ai_intro_response = generate_response(session['history'])
+        session['history'].append({'role':'assistant','content': ai_intro_response})
+        session['player_status'] = f"Health: 100/100 | Inventory: Nothing"
+        options = extract_options(ai_intro_response)
+        scene_text = strip_markdown_bold(ai_intro_response)
 
-    dungeon_intro = {
-        'role': 'system',
-        'content': (
-            "You are a dungeon master guiding the player through a dark dungeon. "
-            "Always give 2 or 3 clear numbered options for the player to choose from. "
-            "Keep your responses short, punchy, and conversational. "
-            "Describe scenes briefly with vivid but minimal detail."
-        )
-    }
+    if request.method == "POST":
+        choice_num = int(request.form.get("choice"))
+        last_ai_msg = session['history'][-1]['content']
+        options = extract_options(last_ai_msg)
+        player_choice_text = options.get(choice_num)
 
-    conversation_history = [dungeon_intro]
+        if player_choice_text:
+            # Append player choice
+            session['history'].append({'role':'user','content': player_choice_text})
 
-    initial_prompt = (
-        "You're standing at the entrance of a dark dungeon. "
-        "Say something short and natural, then give 3 simple numbered options for the player."
-    )
+            # Update player status here, simplistic example:
+            # TODO: Load player from session and update inventory, health, etc
 
-    conversation_history.append({'role': 'user', 'content': initial_prompt})
+            # Prepare new history context for AI call
+            # Could include player status as system message if you want
+            ai_response = generate_response(session['history'][-(MAX_HISTORY+2):])
+            session['history'].append({'role':'assistant','content': ai_response})
 
-    # Add player status as a system message in history
-    player_status = {'role': 'system', 'content': f"Player status: {player.get_status()}"}
-    conversation_history.append(player_status)
-
-    ai_intro_response = generate_response(conversation_history)
-    conversation_history.append({'role': 'assistant', 'content': ai_intro_response})
-
-    print(f"AI Dungeon: {strip_markdown_bold(ai_intro_response)}\n")
-    print(f"Your status: {player.get_status()}\n")
-
-    while True:
-        user_input = input("> You (choose option number): ").strip().lower()
-
-        if user_input in ['exit', 'quit', 'leave']:
-            print("You decide to leave the dungeon. Game over. Goodbye!")
-            break
-
-        if user_input in ['reset', 'new game']:
-            player = Player()  # Reset player state
-            conversation_history = [dungeon_intro]
-            conversation_history.append({'role': 'user', 'content': initial_prompt})
-            player_status = {'role': 'system', 'content': f"Player status: {player.get_status()}"}
-            conversation_history.append(player_status)
-            ai_intro_response = generate_response(conversation_history)
-            conversation_history.append({'role': 'assistant', 'content': ai_intro_response})
-            print("Game has been reset. You're back at the dungeon entrance.\n")
-            print(f"AI Dungeon: {strip_markdown_bold(ai_intro_response)}\n")
-            print(f"Your status: {player.get_status()}\n")
-            continue
-
-        if user_input.isdigit():
-            choice_number = int(user_input)
-            last_ai_msg = conversation_history[-1]['content']
-            options = extract_options(last_ai_msg)
-
-            if choice_number not in options:
-                print(f"Invalid choice! Please select a number from the options: {sorted(options.keys())}")
-                continue
-
-            player_choice_text = options[choice_number]
-
-            # Update player state based on choice text (example logic)
-            # You can expand this with your own rules or AI-assisted parsing
-            if "pick up key" in player_choice_text.lower():
-                if not player.has_item("rusty key"):
-                    player.add_item("rusty key")
-                    print("You picked up a rusty key!\n")
-
-            conversation_history.append({'role': 'user', 'content': player_choice_text})
-
-            # Add player status before calling AI to provide context
-            player_status = {'role': 'system', 'content': f"Player status: {player.get_status()}"}
-            trimmed_history = [dungeon_intro, player_status] + conversation_history[-MAX_HISTORY:]
-
-            ai_response = generate_response(trimmed_history)
-            conversation_history.append({'role': 'assistant', 'content': ai_response})
-
-            print(f"AI Dungeon: {strip_markdown_bold(ai_response)}\n")
-            print(f"Your status: {player.get_status()}\n")
-
+            scene_text = strip_markdown_bold(ai_response)
+            options = extract_options(ai_response)
         else:
-            print("Please enter a valid option number or 'exit', 'reset'.")
+            scene_text = "Invalid choice!"
+            options = {}
+
+        return render_template("game.html", scene=scene_text, options=options, player_status=session['player_status'])
+
+    # GET request initial rendering
+    last_ai_msg = session['history'][-1]['content']
+    options = extract_options(last_ai_msg)
+    scene_text = strip_markdown_bold(last_ai_msg)
+    return render_template("game.html", scene=scene_text, options=options, player_status=session['player_status'])
+
 
 if __name__ == "__main__":
-    main()
+    app.run(debug=True)

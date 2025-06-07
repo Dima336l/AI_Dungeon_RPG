@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>AI Dungeon</title>
+</head>
+<body>
+    <h1>AI Dungeon</h1>
+    <p>{{ scene }}</p>
+
+    <p><strong>Your status:</strong> {{ player_status }}</p>
+
+    <form method="post">
+        {% for num, option in options.items() %}
+            <button type="submit" name="choice" value="{{ num }}">{{ num }}. {{ option }}</button><br/>
+        {% endfor %}
+    </form>
+
+</body>
+</html>
