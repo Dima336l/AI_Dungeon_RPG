@@ -1,0 +1,82 @@
+/* static/styles.css */
+
+/* Dark dungeon themed background */
+body {
+  margin: 0;
+  background: #0b0c10; /* very dark blue/black */
+  color: #c5c6c7;       /* soft light gray */
+  font-family: 'Cinzel', serif; /* fancy medieval style font from Google Fonts */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* Container for text + options */
+#game-container {
+  background: linear-gradient(145deg, #1f2833, #16222a);
+  border: 3px solid #66fcf1; /* bright cyan border */
+  border-radius: 12px;
+  width: 600px;
+  max-width: 90vw;
+  padding: 25px 35px;
+  box-shadow:
+    0 0 15px 2px #45a29e,
+    inset 0 0 20px 1px #45a29e;
+}
+
+h1 {
+  margin-top: 0;
+  font-weight: 700;
+  color: #45a29e; /* teal/cyan */
+  text-align: center;
+  font-size: 2.2rem;
+  letter-spacing: 3px;
+  text-shadow: 0 0 10px #66fcf1;
+}
+
+#scene-text {
+  font-size: 1.2rem;
+  line-height: 1.5;
+  margin-bottom: 30px;
+  min-height: 120px;
+}
+
+#options {
+  list-style: none;
+  padding-left: 0;
+}
+
+#options li {
+  background: #0b0c10;
+  margin-bottom: 15px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  transition: border-color 0.3s ease, background-color 0.3s ease;
+}
+
+#options li:hover {
+  border-color: #66fcf1;
+  background-color: #1f2833;
+}
+
+/* Player status bar */
+#status-bar {
+  margin-top: 30px;
+  font-size: 1rem;
+  border-top: 1px solid #45a29e;
+  padding-top: 15px;
+  text-align: center;
+  color: #66fcf1;
+  font-weight: 600;
+}
+
+#options, #status-bar {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  pointer-events: none; /* Disable clicking while hidden */
+}
+

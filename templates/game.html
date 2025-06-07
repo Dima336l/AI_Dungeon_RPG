@@ -1,20 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <title>AI Dungeon</title>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+<title>AI Dungeon</title>
 </head>
 <body>
+  <div id="game-container">
     <h1>AI Dungeon</h1>
-    <p>{{ scene }}</p>
+    <div id="scene-text">{{ scene }}</div>
+    <ul id="options">
+      {% for num, option in options.items() %}
+        <li data-option="{{ num }}">{{ num }}. {{ option }}</li>
+      {% endfor %}
+    </ul>
+    <div id="status-bar">{{ player_status }}</div>
+  </div>
 
-    <p><strong>Your status:</strong> {{ player_status }}</p>
+<script>
+  // Typing animation function
+  function typeText(element, text, speed = 40, callback) {
+    let index = 0;
+    element.textContent = '';  // Clear existing text
 
-    <form method="post">
-        {% for num, option in options.items() %}
-            <button type="submit" name="choice" value="{{ num }}">{{ num }}. {{ option }}</button><br/>
-        {% endfor %}
-    </form>
+    function type() {
+      if (index < text.length) {
+        element.textContent += text.charAt(index);
+        index++;
+        setTimeout(type, speed);
+      } else if (callback) {
+        callback();
+      }
+    }
+
+    type();
+  }
+
+  // On page load, start typing the scene text
+  document.addEventListener('DOMContentLoaded', () => {
+    const sceneElem = document.getElementById('scene-text');
+    const optionsElem = document.getElementById('options');
+    const statusElem = document.getElementById('status-bar');
+    const fullText = `{{ scene | safe }}`;
+
+    typeText(sceneElem, fullText, 30, () => {
+      // Reveal options and status after typing finishes
+      optionsElem.style.opacity = 1;
+      optionsElem.style.pointerEvents = 'auto';
+      statusElem.style.opacity = 1;
+    });
+  });
+
+</script>
 
 </body>
 </html>
