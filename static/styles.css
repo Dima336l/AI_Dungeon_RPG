@@ -1,82 +1,106 @@
-/* static/styles.css */
+/* styles.css */
 
-/* Dark dungeon themed background */
 body {
+  background: #121212; /* dark dungeon-like background */
+  color: #eee;
+  font-family: 'Press Start 2P', monospace;
   margin: 0;
-  background: #0b0c10; /* very dark blue/black */
-  color: #c5c6c7;       /* soft light gray */
-  font-family: 'Cinzel', serif; /* fancy medieval style font from Google Fonts */
+  padding: 20px;
   display: flex;
   justify-content: center;
-  align-items: center;
-  height: 100vh;
-  overflow: hidden;
+  align-items: flex-start;
+  min-height: 100vh;
+  user-select: none;
 }
 
-/* Container for text + options */
 #game-container {
-  background: linear-gradient(145deg, #1f2833, #16222a);
-  border: 3px solid #66fcf1; /* bright cyan border */
-  border-radius: 12px;
   width: 600px;
-  max-width: 90vw;
-  padding: 25px 35px;
-  box-shadow:
-    0 0 15px 2px #45a29e,
-    inset 0 0 20px 1px #45a29e;
+  background: #222;
+  border: 4px solid #4caf50;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 0 15px #4caf50;
 }
 
 h1 {
-  margin-top: 0;
+  font-family: 'Cinzel', serif;
   font-weight: 700;
-  color: #45a29e; /* teal/cyan */
+  font-size: 32px;
   text-align: center;
-  font-size: 2.2rem;
-  letter-spacing: 3px;
-  text-shadow: 0 0 10px #66fcf1;
+  color: #4caf50;
+  margin-bottom: 20px;
+  text-shadow:
+    2px 2px 0 #000,
+    4px 4px 4px #0a0;
+}
+
+#start-btn {
+  display: block;
+  margin: 0 auto 30px auto;
+  padding: 15px 30px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 14px;
+  background-color: #4caf50;
+  color: #121212;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 4px #388e3c;
+  transition: background-color 0.2s;
+  user-select: none;
+}
+
+#start-btn:hover {
+  background-color: #66bb6a;
 }
 
 #scene-text {
-  font-size: 1.2rem;
+  font-size: 14px;
   line-height: 1.5;
-  margin-bottom: 30px;
   min-height: 120px;
+  margin-bottom: 20px;
+  white-space: pre-wrap;
+  border: 2px solid #4caf50;
+  padding: 15px;
+  background-color: #181818;
+  box-shadow: inset 0 0 10px #2e7d32;
+  border-radius: 4px;
 }
 
 #options {
-  list-style: none;
-  padding-left: 0;
+  list-style-type: none;
+  padding: 0;
+  margin: 0 0 20px 0;
+  cursor: default;
 }
 
 #options li {
-  background: #0b0c10;
-  margin-bottom: 15px;
-  padding: 12px 20px;
-  border-radius: 8px;
-  cursor: pointer;
-  border: 1.5px solid transparent;
-  transition: border-color 0.3s ease, background-color 0.3s ease;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  background-color: #2e7d32;
+  border-radius: 4px;
+  box-shadow: 0 2px #1b4d1b;
+  transition: background-color 0.2s;
+  font-size: 13px;
+  user-select: none;
 }
 
 #options li:hover {
-  border-color: #66fcf1;
-  background-color: #1f2833;
+  background-color: #66bb6a;
+  cursor: pointer;
 }
 
-/* Player status bar */
 #status-bar {
-  margin-top: 30px;
-  font-size: 1rem;
-  border-top: 1px solid #45a29e;
-  padding-top: 15px;
+  font-size: 12px;
+  font-family: 'Press Start 2P', monospace;
+  color: #a5d6a7;
   text-align: center;
-  color: #66fcf1;
-  font-weight: 600;
+  border-top: 2px solid #4caf50;
+  padding-top: 10px;
+  user-select: none;
 }
 
-#options, #status-bar {
-  opacity: 0;
-  transition: opacity 0.5s ease;
-  pointer-events: none; /* Disable clicking while hidden */
+/* Disable pointer events for options when hidden */
+#options[style*="opacity: 0"] li {
+  pointer-events: none;
 }
-
