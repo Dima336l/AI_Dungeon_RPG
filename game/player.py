@@ -13,6 +13,12 @@ class Player:
     def has_item(self, item):
         return item in self.inventory
 
-    def __str__(self):
+    def take_damage(self, amount):
+        self.health = max(0, self.health - amount)
+
+    def heal(self, amount):
+        self.health = min(100, self.health + amount)
+
+    def get_status(self):
         inv = ', '.join(self.inventory) if self.inventory else 'Nothing'
         return f"Health: {self.health}/100 | Inventory: {inv}"

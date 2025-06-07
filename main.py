@@ -55,16 +55,16 @@ def main():
     conversation_history.append({'role': 'user', 'content': initial_prompt})
 
     # Add player status as a system message in history
-    player_status = {'role': 'system', 'content': f"Player status: {player}"}
+    player_status = {'role': 'system', 'content': f"Player status: {player.get_status()}"}
     conversation_history.append(player_status)
 
     ai_intro_response = generate_response(conversation_history)
     conversation_history.append({'role': 'assistant', 'content': ai_intro_response})
 
     print(f"AI Dungeon: {strip_markdown_bold(ai_intro_response)}\n")
+    print(f"Your status: {player.get_status()}\n")
 
     while True:
-        print(f"Your status: {player}\n")
         user_input = input("> You (choose option number): ").strip().lower()
 
         if user_input in ['exit', 'quit', 'leave']:
@@ -75,12 +75,13 @@ def main():
             player = Player()  # Reset player state
             conversation_history = [dungeon_intro]
             conversation_history.append({'role': 'user', 'content': initial_prompt})
-            player_status = {'role': 'system', 'content': f"Player status: {player}"}
+            player_status = {'role': 'system', 'content': f"Player status: {player.get_status()}"}
             conversation_history.append(player_status)
             ai_intro_response = generate_response(conversation_history)
             conversation_history.append({'role': 'assistant', 'content': ai_intro_response})
             print("Game has been reset. You're back at the dungeon entrance.\n")
             print(f"AI Dungeon: {strip_markdown_bold(ai_intro_response)}\n")
+            print(f"Your status: {player.get_status()}\n")
             continue
 
         if user_input.isdigit():
@@ -104,13 +105,14 @@ def main():
             conversation_history.append({'role': 'user', 'content': player_choice_text})
 
             # Add player status before calling AI to provide context
-            player_status = {'role': 'system', 'content': f"Player status: {player}"}
+            player_status = {'role': 'system', 'content': f"Player status: {player.get_status()}"}
             trimmed_history = [dungeon_intro, player_status] + conversation_history[-MAX_HISTORY:]
 
             ai_response = generate_response(trimmed_history)
             conversation_history.append({'role': 'assistant', 'content': ai_response})
 
             print(f"AI Dungeon: {strip_markdown_bold(ai_response)}\n")
+            print(f"Your status: {player.get_status()}\n")
 
         else:
             print("Please enter a valid option number or 'exit', 'reset'.")
