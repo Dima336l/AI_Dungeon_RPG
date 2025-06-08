@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
   <title>AI Dungeon</title>
 </head>
 <body>
@@ -19,11 +19,11 @@
   <button id="start-btn">Start Reading</button>
 
   <script>
-    window.sceneText = `{{ scene | safe }}`;
-    window.optionsData = {{ options | tojson | safe }};
+    // Properly serialize variables from Flask
+    window.sceneText = {{ scene|tojson }};
+    window.optionsData = {{ options|tojson }};
     window.beepUrl = "{{ url_for('static', filename='beep.wav') }}";
   </script>
   <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
-
 </html>
