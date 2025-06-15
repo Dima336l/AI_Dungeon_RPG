@@ -3,23 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
   <title>AI Dungeon</title>
 </head>
 <body>
-  <div id="book-container">
-    <div id="page">
-      <h1>AI Dungeon</h1>
-      <div id="scene-text"></div>
-      <div id="choices"></div>
+  <div class="monitor-frame">
+    <img src="{{ url_for('static', filename='retro_monitor.jpg') }}" alt="Retro Monitor" class="monitor-img" />
+    <div class="monitor-screen">
+      <div id="book-container">
+        <div id="page">
+          <h1>AI Dungeon</h1>
+          <div id="scene-text"></div>
+          <div id="choices"></div>
+        </div>
+      </div>
     </div>
   </div>
+
   <button id="start-btn">Start Reading</button>
 
   <script>
-    // Properly serialize variables from Flask
     window.sceneText = {{ scene|tojson }};
     window.optionsData = {{ options|tojson }};
     window.beepUrl = "{{ url_for('static', filename='beep.wav') }}";

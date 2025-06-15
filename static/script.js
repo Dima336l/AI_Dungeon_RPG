@@ -57,7 +57,8 @@ function showChoices() {
     const btn = document.createElement('button');
     btn.className = 'choice-btn';
     btn.setAttribute('data-option', num);
-    btn.textContent = `${num}. ${option}`;
+    btn.textContent = option;
+
 
     btn.addEventListener('click', () => {
       console.log(`Choice button clicked: ${num}`);
