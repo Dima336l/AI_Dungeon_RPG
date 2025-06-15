@@ -1,7 +1,11 @@
 body {
   margin: 0;
   padding: 0;
-  background-color: black;
+  background-image: url('/static/basement.png');
+  background-repeat: no-repeat;
+background-size: cover;
+
+  background-color: #000; /* fallback color */
   font-family: 'Press Start 2P', monospace;
   color: #00ff00;
   height: 100vh;
@@ -18,6 +22,8 @@ body {
   width: 800px;
   height: 600px;
   background-color: black;
+   margin-top: 160px;
+   margin-right: 200px;
 }
 
 .monitor-img {
