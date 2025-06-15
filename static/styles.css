@@ -30,11 +30,12 @@ body {
 
 .monitor-screen {
   position: absolute;
-  top: 10%;  /* Adjust to match image screen area */
+  top: 10%;
   left: 8%;
   width: 72%;
   height: 77%;
-  overflow: auto;
+  display: flex;
+  flex-direction: column;
   padding: 10px;
   background-color: black;
   color: #00ff00;
@@ -42,7 +43,11 @@ body {
   box-shadow: 0 0 20px #00ff00;
   z-index: 2;
   pointer-events: auto;
+  overflow: hidden;
+  border-radius: 8px;
+  transform: perspective(1000px) rotateX(1deg);
 }
+
 
 #book-container {
   all: unset; /* Reset previous styling */
@@ -65,10 +70,9 @@ h1 {
 }
 
 #scene-text {
-  background-color: transparent !important; /* remove background */
-  border: none !important;                   /* remove border */
-  padding: 0 !important;                     /* remove padding */
-  margin-bottom: 20px;
+  flex: 1 1 auto;        /* take remaining space */
+  overflow-y: auto;      /* scroll if needed */
+  margin-bottom: 10px;
   white-space: pre-line;
   font-size: 0.9rem;
   line-height: 1.4;
@@ -76,12 +80,13 @@ h1 {
   text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00;
 }
 
-
 #choices {
+  flex-shrink: 0;        /* never shrink */
   display: flex;
   flex-direction: column;
   gap: 10px;
 }
+
 
 .choice-btn {
   background: transparent;        /* no background */
