@@ -10,18 +10,18 @@
 <body>
   <div class="monitor-frame">
     <img src="{{ url_for('static', filename='retro_monitor.jpg') }}" alt="Retro Monitor" class="monitor-img" />
-    <div class="monitor-screen">
-      <div id="book-container">
-        <div id="page">
-          <h1>AI Dungeon</h1>
-          <div id="scene-text"></div>
-          <div id="choices"></div>
-        </div>
+  <div class="monitor-screen">
+    <div id="book-container">
+      <div id="page">
+        <h1>AI Dungeon</h1>
+        <div id="scene-text"></div>
+        <div id="choices"></div>
       </div>
     </div>
+    <button id="start-btn">Start</button>
+  </div>
   </div>
 
-  <button id="start-btn">Start Reading</button>
 
   <script>
     window.sceneText = {{ scene|tojson }};

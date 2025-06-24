@@ -126,32 +126,30 @@ h1 {
 
 
 #start-btn {
-  position: absolute;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%);
+  align-self: center;
+  margin-top: auto;
+  margin-bottom: 10px;
   background-color: black;
   color: #00ff00;
   padding: 10px 20px;
-  font-size: 1rem;
-  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9rem;
+  font-family: 'Courier New', monospace;
   border: 2px solid #00ff00;
-  border-radius: 6px;
+  border-radius: 4px;
   cursor: pointer;
-  z-index: 999;
-  box-shadow: 0 0 10px #00ff00;
-  transition: background-color 0.3s;
+  box-shadow: 0 0 8px #00ff00;
+  text-shadow: 0 0 5px #00ff00;
+  transition: background-color 0.3s, box-shadow 0.3s;
+  animation: blink 1.2s steps(2, start) infinite;
 }
 
 #start-btn:hover {
   background-color: #002200;
+  box-shadow: 0 0 12px #00ff00;
 }
 
-
-
-@keyframes flicker {
-  0%, 100% { opacity: 0.98; }
-  50% { opacity: 1; }
+@keyframes blink {
+  50% { opacity: 0.6; }
 }
 
 
