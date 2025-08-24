@@ -10,24 +10,157 @@
 <body>
   <div class="monitor-frame">
     <img src="{{ url_for('static', filename='retro_monitor.jpg') }}" alt="Retro Monitor" class="monitor-img" />
-  <div class="monitor-screen">
-    <div id="book-container">
-      <div id="page">
-        <h1>AI Dungeon</h1>
-        <div id="scene-text"></div>
-        <div id="choices"></div>
+    <div class="monitor-screen">
+      <div id="book-container">
+        <div id="page">
+          <h1>AI Dungeon</h1>
+          
+          <div id="content-area">
+            <!-- Scene Text -->
+            <div id="scene-text"></div>
+            
+            <!-- Scene Image Container -->
+            <div id="scene-image-container"></div>
+            
+            <!-- Choices -->
+            <div id="choices"></div>
+          </div>
+          
+          <!-- Player Status (fixed at bottom) -->
+          <div id="player-status" style="display: none;">{{ player_status }}</div>
+        </div>
       </div>
+      <button id="start-btn">Start Adventure</button>
     </div>
-    <button id="start-btn">Start</button>
   </div>
-  </div>
-
 
   <script>
-    window.sceneText = {{ scene|tojson }};
-    window.optionsData = {{ options|tojson }};
-    window.beepUrl = "{{ url_for('static', filename='beep.wav') }}";
+    // Initial data
+    const initialSceneText = {{ scene|tojson }};
+    const initialOptions = {{ options|tojson }};
+    const initialSceneImage = "{{ scene_image }}";
+    const initialPlayerStatus = "{{ player_status }}";
+
+    let isTyping = false;
+
+    // Function to "type" scene text - FIXED VERSION
+    function typeSceneText(sceneText, callback) {
+      const sceneDiv = document.getElementById('scene-text');
+      sceneDiv.textContent = ''; // Clear existing content
+      sceneDiv.classList.add('typing-cursor');
+      
+      isTyping = true;
+      let i = 0;
+      
+      function typeNext() {
+        if (i < sceneText.length) {
+          // FIXED: Use substring instead of += to prevent skipping
+          sceneDiv.textContent = sceneText.substring(0, i + 1);
+          i++;
+          setTimeout(typeNext, 30);
+        } else {
+          sceneDiv.classList.remove('typing-cursor');
+          isTyping = false;
+          if (callback) {
+            setTimeout(callback, 500);
+          }
+        }
+      }
+      typeNext();
+    }
+
+    // Show scene image with animation
+    function showSceneImage(sceneImageUrl, callback) {
+      if (!sceneImageUrl) {
+        if (callback) setTimeout(callback, 100);
+        return;
+      }
+      
+      const container = document.getElementById('scene-image-container');
+      container.innerHTML = '';
+      
+      const img = document.createElement('img');
+      img.src = sceneImageUrl;
+      img.alt = 'Scene image';
+      img.onload = () => {
+        setTimeout(() => {
+          img.classList.add('show');
+          if (callback) setTimeout(callback, 600);
+        }, 100);
+      };
+      container.appendChild(img);
+    }
+
+    // Update choices with animation
+    function updateChoices(options) {
+      const choicesDiv = document.getElementById('choices');
+      choicesDiv.innerHTML = '';
+      choicesDiv.classList.remove('show');
+      
+      for (const [num, text] of Object.entries(options)) {
+        const btn = document.createElement('button');
+        btn.className = 'choice-btn';
+        btn.textContent = text;
+        btn.onclick = () => makeChoice(num);
+        choicesDiv.appendChild(btn);
+      }
+      
+      setTimeout(() => {
+        choicesDiv.classList.add('show');
+      }, 100);
+    }
+
+    // Update player status and show it
+    function updatePlayerStatus(status) {
+      const statusDiv = document.getElementById('player-status');
+      statusDiv.textContent = status;
+      statusDiv.style.display = 'block'; // Show status when game starts
+    }
+
+    // Update full scene with proper sequencing
+    function updateScene(sceneText, options, sceneImage, playerStatus) {
+      updatePlayerStatus(playerStatus);
+      
+      typeSceneText(sceneText, () => {
+        showSceneImage(sceneImage, () => {
+          updateChoices(options);
+        });
+      });
+    }
+
+    // Handle choice selection with AJAX
+    function makeChoice(choiceNum) {
+      if (isTyping) return;
+      
+      console.log("Player chose:", choiceNum);
+      
+      const choicesDiv = document.getElementById('choices');
+      choicesDiv.classList.remove('show');
+      
+      // Send choice to Flask via fetch/AJAX
+      fetch('/make_choice', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ choice: choiceNum })
+      })
+      .then(response => response.json())
+      .then(data => {
+        updateScene(data.scene, data.options, data.scene_image, data.player_status);
+      })
+      .catch(error => {
+        console.error('Error:', error);
+      });
+    }
+
+    // Start button functionality
+    document.getElementById('start-btn').addEventListener('click', function() {
+      this.style.display = 'none';
+      updateScene(initialSceneText, initialOptions, initialSceneImage, initialPlayerStatus);
+    });
   </script>
+
   <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>

@@ -3,9 +3,8 @@ body {
   padding: 0;
   background-image: url('/static/basement.png');
   background-repeat: no-repeat;
-background-size: cover;
-
-  background-color: #000; /* fallback color */
+  background-size: cover;
+  background-color: #000;
   font-family: 'Press Start 2P', monospace;
   color: #00ff00;
   height: 100vh;
@@ -22,8 +21,8 @@ background-size: cover;
   width: 800px;
   height: 600px;
   background-color: black;
-   margin-top: 160px;
-   margin-right: 200px;
+  margin-top: 160px;
+  margin-right: 200px;
 }
 
 .monitor-img {
@@ -42,126 +41,20 @@ background-size: cover;
   height: 77%;
   display: flex;
   flex-direction: column;
-  padding: 10px;
-  background-color: black;
+  padding: 15px;
+  background-color: rgba(0, 0, 0, 0.9);
   color: #00ff00;
   font-family: 'Courier New', monospace;
   box-shadow: 0 0 20px #00ff00;
   z-index: 2;
   pointer-events: auto;
-  overflow: hidden;
   border-radius: 8px;
   transform: perspective(1000px) rotateX(1deg);
-}
-
-
-#book-container {
-  all: unset; /* Reset previous styling */
-  width: 100%;
-  height: 100%;
-}
-
-#page {
-  height: 100%;
-  overflow-y: auto;
-}
-
-h1 {
-  font-family: 'Press Start 2P', monospace;
-  font-size: 1.2em;
-  text-align: center;
-  color: #00ff00;
-  margin-bottom: 20px;
-  text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00;
-}
-
-#scene-text {
-  flex: 1 1 auto;        /* take remaining space */
-  overflow-y: auto;      /* scroll if needed */
-  margin-bottom: 10px;
-  white-space: pre-line;
-  font-size: 0.9rem;
-  line-height: 1.6;
-  letter-spacing: 0.5px;
-  padding: 1rem;
-  color: #00ff00;
-  text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00;
-}
-
-#choices {
-  flex-shrink: 0;        /* never shrink */
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-
-.choice-btn {
-  background: transparent;        /* no background */
-  border: none;                   /* remove border */
-  color: #00ff00;
-  font-size: 0.9rem;
-  padding: 4px 0;                 /* minimal vertical padding */
-  cursor: pointer;
-  text-align: left;
-  text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00;
-  font-family: 'Courier New', monospace;
-  transition: color 0.2s ease;
-}
-
-.choice-btn:hover {
-  color: #99ff99;                /* lighter green on hover */
-  text-shadow: 0 0 8px #99ff99, 0 0 15px #99ff99;
-  background: rgba(0, 255, 0, 0.1); /* subtle glow behind text */
-  border-radius: 4px;
-}
-
-.choice-btn::before {
-  content: "> ";
-  color: #00ff00;
-  text-shadow: 0 0 5px #00ff00;
-}
-
-
-
-
-#start-btn {
-  align-self: center;
-  margin-top: auto;
-  margin-bottom: 10px;
-  background-color: black;
-  color: #00ff00;
-  padding: 10px 20px;
-  font-size: 0.9rem;
-  font-family: 'Courier New', monospace;
-  border: 2px solid #00ff00;
-  border-radius: 4px;
-  cursor: pointer;
-  box-shadow: 0 0 8px #00ff00;
-  text-shadow: 0 0 5px #00ff00;
-  transition: background-color 0.3s, box-shadow 0.3s;
-  animation: blink 1.2s steps(2, start) infinite;
-}
-
-#start-btn:hover {
-  background-color: #002200;
-  box-shadow: 0 0 12px #00ff00;
-}
-
-@keyframes blink {
-  50% { opacity: 0.6; }
-}
-
-
-.monitor-screen {
-  background-color: rgba(0, 0, 0, 0.8);
   backdrop-filter: blur(3px);
   border: 2px solid #555;
-  border-radius: 8px;
   box-shadow: inset 0 0 30px #000;
-  padding: 1.5rem;
+  overflow: hidden; /* CHANGED: Remove auto scroll from main container */
 }
-
 
 .monitor-screen::before {
   content: "";
@@ -198,4 +91,197 @@ h1 {
 
 .monitor-screen {
   animation: flicker 2s infinite;
+}
+
+#book-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+}
+
+#page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+h1 {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 1.2em;
+  text-align: center;
+  color: #00ff00;
+  margin-bottom: 20px;
+  text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00;
+  flex-shrink: 0;
+}
+
+/* NEW: Content area that scrolls independently */
+#content-area {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 10px; /* Space for status bar */
+}
+
+#scene-text {
+  flex-shrink: 0;
+  margin-bottom: 15px;
+  white-space: pre-wrap;
+  font-size: 0.8rem;
+  line-height: 1.8;
+  letter-spacing: 0.5px;
+  padding: 10px;
+  color: #00ff00;
+  text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+#scene-image-container {
+  text-align: center;
+  margin: 10px 0;
+  flex-shrink: 0;
+}
+
+#scene-image-container img {
+  max-width: 100%;
+  max-height: 150px;
+  width: auto;
+  height: auto;
+  border: 2px solid #00ff00;
+  border-radius: 5px;
+  box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
+  opacity: 0;
+  transform: scale(0.9);
+  transition: all 0.5s ease-in-out;
+  object-fit: contain;
+}
+
+#scene-image-container img.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+#choices {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.5s ease-in-out;
+}
+
+#choices.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.choice-btn {
+  background: transparent;
+  border: none;
+  color: #00ff00;
+  font-size: 0.75rem;
+  padding: 8px 12px;
+  cursor: pointer;
+  text-align: left;
+  text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00;
+  font-family: 'Courier New', monospace;
+  transition: all 0.3s ease;
+  border-radius: 4px;
+  position: relative;
+  z-index: 1001;
+}
+
+.choice-btn:hover {
+  color: #99ff99;
+  text-shadow: 0 0 8px #99ff99, 0 0 15px #99ff99;
+  background: rgba(0, 255, 0, 0.15);
+  transform: translateX(5px);
+}
+
+.choice-btn::before {
+  content: "> ";
+  color: #00ff00;
+  text-shadow: 0 0 5px #00ff00;
+}
+
+/* FIXED: Player status now stays at bottom */
+#player-status {
+  color: #ffff00;
+  padding: 8px;
+  border: 1px solid #ffff00;
+  border-radius: 5px;
+  background: rgba(255, 255, 0, 0.1);
+  text-shadow: 0 0 5px #ffff00;
+  font-size: 0.7rem;
+  flex-shrink: 0;
+  margin-top: auto; /* Push to bottom */
+  position: sticky;
+  bottom: 0;
+  z-index: 1003;
+}
+
+#start-btn {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 15px 25px;
+  background-color: black;
+  color: #00ff00;
+  font-size: 0.9rem;
+  font-family: 'Press Start 2P', monospace;
+  border: 2px solid #00ff00;
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 0 8px #00ff00;
+  text-shadow: 0 0 5px #00ff00;
+  transition: all 0.3s ease;
+  animation: blink 1.2s steps(2, start) infinite;
+  z-index: 1002;
+}
+
+#start-btn:hover {
+  background-color: #002200;
+  box-shadow: 0 0 12px #00ff00;
+}
+
+@keyframes blink {
+  50% { opacity: 0.6; }
+}
+
+.typing-cursor::after {
+  content: '▋';
+  animation: cursor-blink 1s infinite;
+}
+
+@keyframes cursor-blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+/* UPDATED: Scrollbar styling for content area */
+#content-area::-webkit-scrollbar {
+  width: 8px;
+}
+
+#content-area::-webkit-scrollbar-track {
+  background: #000;
+}
+
+#content-area::-webkit-scrollbar-thumb {
+  background: #00ff00;
+  border-radius: 4px;
+  box-shadow: 0 0 5px #00ff00;
+}
+
+#content-area::-webkit-scrollbar-thumb:hover {
+  background: #00cc00;
 }

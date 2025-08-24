@@ -5,6 +5,9 @@ import os
 import re
 import ollama
 from game.player import Player
+from generate_images import generate_image_from_text
+
+TARGET_DIR = r"C:\Users\nirca\repos\rpg_dungeon_ai\static\images"
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'  # Needed for sessions
@@ -68,12 +71,33 @@ def index():
         session['history'].append({'role': 'assistant', 'content': ai_intro_response})
         session['player_status'] = "Health: 100/100 | Inventory: Nothing"
 
+    def sanitize_filename(s, max_length=50):
+        s = re.sub(r'[<>:"/\\|?*]', '', s)
+        s = s.strip().replace(' ', '_')
+        return s[:max_length]
+
+    # Helper function to generate or fetch cached scene image
+    def get_scene_image(scene_text):
+        scene_hash = sanitize_filename(scene_text)
+        cached_image_path = os.path.join(TARGET_DIR, f"{scene_hash}.png")
+        if not os.path.exists(cached_image_path):
+            # Generate new image if not cached
+            return generate_image_from_text(scene_text)
+        else:
+            return f"/static/images/{scene_hash}.png"
+
     if request.method == "POST":
         choice_num = request.form.get("choice")
         if not choice_num or not choice_num.isdigit():
             scene_text = "Invalid choice!"
             options = {}
-            return render_template("game.html", scene=scene_text, options=options, player_status=session['player_status'])
+            return render_template(
+                "game.html",
+                scene=scene_text,
+                options=options,
+                player_status=session['player_status'],
+                scene_image=None
+            )
 
         choice_num = int(choice_num)
         last_ai_msg = session['history'][-1]['content']
@@ -92,33 +116,50 @@ def index():
             scene_text = strip_markdown_bold(remove_options_text(ai_response))
             options = extract_options(ai_response)
 
+            # Generate the scene image **after the AI response**
+            scene_image_url = generate_image_from_text(scene_text)
+
             # If AJAX request, return JSON only
             if request.headers.get("X-Requested-With") == "XMLHttpRequest":
                 return jsonify({
                     "scene": scene_text,
                     "options": options,
-                    "player_status": session.get('player_status', '')
+                    "player_status": session.get('player_status', ''),
+                    "scene_image": scene_image_url
                 })
             else:
-                # Normal POST fallback
-                return render_template("game.html", scene=scene_text, options=options, player_status=session['player_status'])
+                return render_template(
+                    "game.html",
+                    scene=scene_text,
+                    options=options,
+                    player_status=session['player_status'],
+                    scene_image=scene_image_url
+                )
         else:
-            # Invalid option number
             scene_text = "Invalid choice!"
             options = {}
-            return render_template("game.html", scene=scene_text, options=options, player_status=session['player_status'])
+            return render_template(
+                "game.html",
+                scene=scene_text,
+                options=options,
+                player_status=session['player_status'],
+                scene_image=None
+            )
 
     # GET request - render initial or current scene and options
     last_ai_msg = session['history'][-1]['content']
-    options = extract_options(last_ai_msg)
     scene_text = strip_markdown_bold(remove_options_text(last_ai_msg))
+    options = extract_options(last_ai_msg)
+    scene_image_url = get_scene_image(scene_text)
 
-    return render_template("game.html", scene=scene_text, options=options, player_status=session['player_status'])
-
+    return render_template(
+        "game.html",
+        scene=scene_text,
+        options=options,
+        player_status=session['player_status'],
+        scene_image=scene_image_url  # <- Pass image to template
+    )
 
 if __name__ == "__main__":
-    # Open browser once server is running
-    if os.environ.get("WERKZEUG_RUN_MAIN") == "true":
-        threading.Timer(1.5, open_browser).start()
 
     app.run(debug=True)
