@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
-  <title>AI Dungeon</title>
+  <title>MMO Dungeon</title>
 </head>
 <body>
   <div class="monitor-frame">
@@ -42,6 +42,8 @@
     const initialPlayerStatus = "{{ player_status }}";
 
     let isTyping = false;
+    let currentSceneId = null;
+    let imageCheckInterval = null;
 
     // Function to "type" scene text - FIXED VERSION
     function typeSceneText(sceneText, callback) {
@@ -94,7 +96,34 @@
           if (callback) setTimeout(callback, 600);
         }, 100);
       };
+      img.onerror = () => {
+        console.log('Image failed to load');
+        if (callback) setTimeout(callback, 100);
+      };
       container.appendChild(img);
+    }
+
+    // Poll for image readiness
+    function checkImageReady(sceneId, callback) {
+      if (!sceneId) {
+        callback(null);
+        return;
+      }
+      
+      fetch(`/get_image/${sceneId}`)
+        .then(response => response.json())
+        .then(data => {
+          if (data.ready && data.image_url) {
+            callback(data.image_url);
+          } else {
+            // Check again in 500ms
+            setTimeout(() => checkImageReady(sceneId, callback), 500);
+          }
+        })
+        .catch(error => {
+          console.error('Error checking image:', error);
+          callback(null);
+        });
     }
 
     // Update choices with animation
@@ -124,13 +153,22 @@
     }
 
     // Update full scene with proper sequencing
-    function updateScene(sceneText, options, sceneImage, playerStatus) {
+    function updateScene(sceneText, options, sceneId, playerStatus) {
       updatePlayerStatus(playerStatus);
+      currentSceneId = sceneId;
       
+      // Start typing text immediately
       typeSceneText(sceneText, () => {
-        showSceneImage(sceneImage, () => {
+        // After text is done, check for image
+        if (sceneId) {
+          checkImageReady(sceneId, (imageUrl) => {
+            showSceneImage(imageUrl, () => {
+              updateChoices(options);
+            });
+          });
+        } else {
           updateChoices(options);
-        });
+        }
       });
     }
 
@@ -155,7 +193,8 @@
       })
       .then(response => response.json())
       .then(data => {
-        updateScene(data.scene, data.options, data.scene_image, data.player_status);
+        // Now we get scene_id instead of scene_image
+        updateScene(data.scene, data.options, data.scene_id, data.player_status);
       })
       .catch(error => {
         console.error('Error:', error);
@@ -165,7 +204,14 @@
     // Start button functionality
     document.getElementById('start-btn').addEventListener('click', function() {
       this.style.display = 'none';
-      updateScene(initialSceneText, initialOptions, initialSceneImage, initialPlayerStatus);
+      updatePlayerStatus(initialPlayerStatus);
+      
+      // For initial scene, we have the image URL directly, so handle it specially
+      typeSceneText(initialSceneText, () => {
+        showSceneImage(initialSceneImage, () => {
+          updateChoices(initialOptions);
+        });
+      });
     });
   </script>
 
