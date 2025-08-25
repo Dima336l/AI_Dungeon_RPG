@@ -8,34 +8,44 @@
   <title>MMO Dungeon</title>
 </head>
 <body>
-  <div class="monitor-frame">
-    <img src="{{ url_for('static', filename='retro_monitor.jpg') }}" alt="Retro Monitor" class="monitor-img" />
-    <div class="monitor-screen">
-      <div id="book-container">
-        <div id="page">
-          <h1>AI Dungeon</h1>
-          
-          <div id="content-area">
-            <!-- Scene Text -->
-            <div id="scene-text"></div>
-            
-            <!-- Scene Image Container -->
-            <div id="scene-image-container"></div>
-            
-            <!-- Choices -->
-            <div id="choices"></div>
+
+  <!-- Header -->
+  <h1 class="page-title">MMO Dungeon</h1>
+
+  <!-- Main content: monitor + start button -->
+  <div class="main-content">
+    <div class="monitor-frame">
+      <img src="{{ url_for('static', filename='retro_monitor.jpg') }}" alt="Retro Monitor" class="monitor-img" />
+      <div class="monitor-screen">
+        <div id="book-container">
+          <div id="page">
+            <h1>AI Dungeon</h1>
+            <div id="content-area">
+              <div id="scene-text"></div>
+              <div id="scene-image-container"></div>
+              <div id="choices"></div>
+            </div>
+            <div id="player-status" style="display:none;">{{ player_status }}</div>
           </div>
-          
-          <!-- Player Status (fixed at bottom) -->
-          <div id="player-status" style="display: none;">{{ player_status }}</div>
         </div>
+        <button id="start-btn">Start Adventure</button>
       </div>
-      <button id="start-btn">Start Adventure</button>
     </div>
   </div>
 
+  <!-- Footer -->
+  <div class="footer">
+    <div id="footer-buttons">
+      <button id="music-toggle">🎵 Music</button>
+      <button id="restart-btn">🔄 Restart</button>
+      <button id="settings-btn">⚙️ Settings</button>
+    </div>
+
+  </div>
+
+  <!-- ===== Scripts ===== -->
   <script>
-    // Initial data
+    // === Game Data ===
     const initialSceneText = {{ scene|tojson }};
     const initialOptions = {{ options|tojson }};
     const initialSceneImage = "{{ scene_image }}";
@@ -43,176 +53,129 @@
 
     let isTyping = false;
     let currentSceneId = null;
-    let imageCheckInterval = null;
 
-    // Function to "type" scene text - FIXED VERSION
+    // === Typing Function ===
     function typeSceneText(sceneText, callback) {
       const sceneDiv = document.getElementById('scene-text');
-      sceneDiv.textContent = ''; // Clear existing content
+      sceneDiv.textContent = '';
       sceneDiv.classList.add('typing-cursor');
-      
       isTyping = true;
       let i = 0;
-      
       function typeNext() {
         if (i < sceneText.length) {
-          // FIXED: Use substring instead of += to prevent skipping
           sceneDiv.textContent = sceneText.substring(0, i + 1);
           i++;
           setTimeout(typeNext, 30);
         } else {
           sceneDiv.classList.remove('typing-cursor');
           isTyping = false;
-          if (callback) {
-            setTimeout(callback, 500);
-          }
+          if (callback) setTimeout(callback, 500);
         }
       }
       typeNext();
     }
 
-    // Clear scene image immediately
+    // === Scene Image Functions ===
     function clearSceneImage() {
-      const container = document.getElementById('scene-image-container');
-      container.innerHTML = '';
+      document.getElementById('scene-image-container').innerHTML = '';
     }
-
-    // Show scene image with animation
     function showSceneImage(sceneImageUrl, callback) {
-      if (!sceneImageUrl) {
-        if (callback) setTimeout(callback, 100);
-        return;
-      }
-      
+      if (!sceneImageUrl) { if (callback) setTimeout(callback,100); return; }
       const container = document.getElementById('scene-image-container');
       container.innerHTML = '';
-      
       const img = document.createElement('img');
       img.src = sceneImageUrl;
       img.alt = 'Scene image';
-      img.onload = () => {
-        setTimeout(() => {
-          img.classList.add('show');
-          if (callback) setTimeout(callback, 600);
-        }, 100);
-      };
-      img.onerror = () => {
-        console.log('Image failed to load');
-        if (callback) setTimeout(callback, 100);
-      };
+      img.onload = () => setTimeout(() => { img.classList.add('show'); if(callback) setTimeout(callback,600); },100);
+      img.onerror = () => { console.log('Image failed to load'); if(callback) setTimeout(callback,100); };
       container.appendChild(img);
     }
 
-    // Poll for image readiness
+    // === Image Polling ===
     function checkImageReady(sceneId, callback) {
-      if (!sceneId) {
-        callback(null);
-        return;
-      }
-      
+      if (!sceneId) { callback(null); return; }
       fetch(`/get_image/${sceneId}`)
-        .then(response => response.json())
+        .then(res => res.json())
         .then(data => {
-          if (data.ready && data.image_url) {
-            callback(data.image_url);
-          } else {
-            // Check again in 500ms
-            setTimeout(() => checkImageReady(sceneId, callback), 500);
-          }
+          if (data.ready && data.image_url) callback(data.image_url);
+          else setTimeout(() => checkImageReady(sceneId,callback),500);
         })
-        .catch(error => {
-          console.error('Error checking image:', error);
-          callback(null);
-        });
+        .catch(e=>{ console.error(e); callback(null); });
     }
 
-    // Update choices with animation
+    // === Choices ===
     function updateChoices(options) {
       const choicesDiv = document.getElementById('choices');
       choicesDiv.innerHTML = '';
       choicesDiv.classList.remove('show');
-      
-      for (const [num, text] of Object.entries(options)) {
+      for (const [num,text] of Object.entries(options)) {
         const btn = document.createElement('button');
         btn.className = 'choice-btn';
         btn.textContent = text;
         btn.onclick = () => makeChoice(num);
         choicesDiv.appendChild(btn);
       }
-      
-      setTimeout(() => {
-        choicesDiv.classList.add('show');
-      }, 100);
+      setTimeout(()=>choicesDiv.classList.add('show'),100);
     }
 
-    // Update player status and show it
+    // === Player Status ===
     function updatePlayerStatus(status) {
       const statusDiv = document.getElementById('player-status');
       statusDiv.textContent = status;
-      statusDiv.style.display = 'block'; // Show status when game starts
+      statusDiv.style.display = 'block';
     }
 
-    // Update full scene with proper sequencing
+    // === Update Full Scene ===
     function updateScene(sceneText, options, sceneId, playerStatus) {
       updatePlayerStatus(playerStatus);
       currentSceneId = sceneId;
-      
-      // Start typing text immediately
       typeSceneText(sceneText, () => {
-        // After text is done, check for image
-        if (sceneId) {
-          checkImageReady(sceneId, (imageUrl) => {
-            showSceneImage(imageUrl, () => {
-              updateChoices(options);
-            });
-          });
-        } else {
-          updateChoices(options);
-        }
+        if(sceneId) checkImageReady(sceneId, imgUrl => showSceneImage(imgUrl,()=>updateChoices(options)));
+        else updateChoices(options);
       });
     }
 
-    // Handle choice selection with AJAX
+    // === Make Choice ===
     function makeChoice(choiceNum) {
-      if (isTyping) return;
-      
-      console.log("Player chose:", choiceNum);
-      
-      // Hide choices and clear image immediately
-      const choicesDiv = document.getElementById('choices');
-      choicesDiv.classList.remove('show');
-      clearSceneImage(); // Clear the old image right away
-      
-      // Send choice to Flask via fetch/AJAX
+      if(isTyping) return;
+      document.getElementById('choices').classList.remove('show');
+      clearSceneImage();
       fetch('/make_choice', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ choice: choiceNum })
-      })
-      .then(response => response.json())
-      .then(data => {
-        // Now we get scene_id instead of scene_image
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({choice:choiceNum})
+      }).then(res=>res.json()).then(data=>{
         updateScene(data.scene, data.options, data.scene_id, data.player_status);
-      })
-      .catch(error => {
-        console.error('Error:', error);
-      });
+      }).catch(e=>console.error(e));
     }
 
-    // Start button functionality
+    // === Start Button ===
+    // Start button click
     document.getElementById('start-btn').addEventListener('click', function() {
       this.style.display = 'none';
+
+      // After starting, top-align content
+      document.getElementById('page').style.justifyContent = 'flex-start';
+
       updatePlayerStatus(initialPlayerStatus);
-      
-      // For initial scene, we have the image URL directly, so handle it specially
-      typeSceneText(initialSceneText, () => {
-        showSceneImage(initialSceneImage, () => {
-          updateChoices(initialOptions);
-        });
-      });
+      typeSceneText(initialSceneText, () => 
+        showSceneImage(initialSceneImage, () => updateChoices(initialOptions))
+      );
     });
+
+
+    // === Footer Buttons ===
+    (function initControls(){
+      const musicBtn=document.getElementById('music-toggle');
+      const restartBtn=document.getElementById('restart-btn');
+      const settingsBtn=document.getElementById('settings-btn');
+      if(!musicBtn||!restartBtn||!settingsBtn) return;
+      let music=null,musicPlaying=false;
+      try{ music = new Audio("{{ url_for('static', filename='music.mp3') }}"); music.loop=true;}catch(e){}
+      musicBtn.addEventListener('click',()=>{if(!music)return; musicPlaying?music.pause():music.play(); musicPlaying=!musicPlaying;});
+      restartBtn.addEventListener('click',()=>{window.location.href="/";});
+      settingsBtn.addEventListener('click',()=>{alert("Settings coming soon!");});
+    })();
   </script>
 
   <script src="{{ url_for('static', filename='script.js') }}"></script>
