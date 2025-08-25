@@ -57,7 +57,7 @@
     // === Typing Function ===
     function typeSceneText(sceneText, callback) {
       const sceneDiv = document.getElementById('scene-text');
-      sceneDiv.textContent = '';
+      sceneDiv.textContent = '\u200B'; // prevent initial RTL glitch
       sceneDiv.classList.add('typing-cursor');
       isTyping = true;
       let i = 0;
@@ -74,6 +74,7 @@
       }
       typeNext();
     }
+
 
     // === Scene Image Functions ===
     function clearSceneImage() {
