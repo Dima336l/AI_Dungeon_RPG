@@ -69,6 +69,12 @@
       typeNext();
     }
 
+    // Clear scene image immediately
+    function clearSceneImage() {
+      const container = document.getElementById('scene-image-container');
+      container.innerHTML = '';
+    }
+
     // Show scene image with animation
     function showSceneImage(sceneImageUrl, callback) {
       if (!sceneImageUrl) {
@@ -134,8 +140,10 @@
       
       console.log("Player chose:", choiceNum);
       
+      // Hide choices and clear image immediately
       const choicesDiv = document.getElementById('choices');
       choicesDiv.classList.remove('show');
+      clearSceneImage(); // Clear the old image right away
       
       // Send choice to Flask via fetch/AJAX
       fetch('/make_choice', {
