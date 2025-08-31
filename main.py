@@ -138,47 +138,57 @@ def index():
 def make_choice():
     data = request.get_json()
     choice_num = data.get('choice')
-    
-    if not choice_num or not str(choice_num).isdigit():
-        return jsonify({
-            "scene": "Invalid choice!",
-            "options": {},
-            "player_status": session.get('player_status', ''),
-            "scene_id": None
-        })
+    free_text = data.get('free_text', "").strip()
 
-    choice_num = int(choice_num)
     last_ai_msg = session['history'][-1]['content']
     options = extract_options(last_ai_msg)
-    player_choice_text = options.get(choice_num)
 
-    if player_choice_text:
-        session['history'].append({'role': 'user', 'content': player_choice_text})
+    # Case 1: User typed something free
+    if free_text:
+        session['history'].append({'role': 'user', 'content': free_text})
         ai_response = generate_response(session['history'][-(MAX_HISTORY+2):])
         session['history'].append({'role': 'assistant', 'content': ai_response})
 
-        scene_text = strip_markdown_bold(remove_options_text(ai_response))
-        options = extract_options(ai_response)
+    # Case 2: User clicked a numbered option
+    elif choice_num and str(choice_num).isdigit():
+        choice_num = int(choice_num)
+        player_choice_text = options.get(choice_num)
 
-        scene_id = f"scene_{len(session['history'])}"
-        
-        thread = threading.Thread(target=generate_image_async, args=(scene_text, scene_id))
-        thread.daemon = True
-        thread.start()
-
-        return jsonify({
-            "scene": scene_text,
-            "options": options,
-            "player_status": session.get('player_status', ''),
-            "scene_id": scene_id
-        })
+        if player_choice_text:
+            session['history'].append({'role': 'user', 'content': player_choice_text})
+            ai_response = generate_response(session['history'][-(MAX_HISTORY+2):])
+            session['history'].append({'role': 'assistant', 'content': ai_response})
+        else:
+            return jsonify({
+                "scene": "Invalid choice!",
+                "options": {},
+                "player_status": session.get('player_status', ''),
+                "scene_id": None
+            })
     else:
         return jsonify({
-            "scene": "Invalid choice!",
+            "scene": "Invalid input!",
             "options": {},
             "player_status": session.get('player_status', ''),
             "scene_id": None
         })
+
+    # Process response
+    scene_text = strip_markdown_bold(remove_options_text(ai_response))
+    options = extract_options(ai_response)
+    scene_id = f"scene_{len(session['history'])}"
+
+    thread = threading.Thread(target=generate_image_async, args=(scene_text, scene_id))
+    thread.daemon = True
+    thread.start()
+
+    return jsonify({
+        "scene": scene_text,
+        "options": options,
+        "player_status": session.get('player_status', ''),
+        "scene_id": scene_id
+    })
+
 
 @app.route("/get_image/<scene_id>", methods=["GET"])
 def get_image(scene_id):

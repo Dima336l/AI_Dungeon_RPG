@@ -24,6 +24,11 @@
               <div id="scene-text"></div>
               <div id="scene-image-container"></div>
               <div id="choices"></div>
+              <!-- Free input box (hidden until choices appear) -->
+              <div id="free-input" style="display:none;">
+                <input type="text" id="customInput" placeholder="Type your action..." />
+                <button onclick="submitFreeText()">Submit</button>
+              </div>
             </div>
             <div id="player-status" style="display:none;">{{ player_status }}</div>
           </div>
@@ -40,7 +45,6 @@
       <button id="restart-btn">🔄 Restart</button>
       <button id="settings-btn">⚙️ Settings</button>
     </div>
-
   </div>
 
   <!-- ===== Scripts ===== -->
@@ -75,7 +79,6 @@
       typeNext();
     }
 
-
     // === Scene Image Functions ===
     function clearSceneImage() {
       document.getElementById('scene-image-container').innerHTML = '';
@@ -109,6 +112,7 @@
       const choicesDiv = document.getElementById('choices');
       choicesDiv.innerHTML = '';
       choicesDiv.classList.remove('show');
+
       for (const [num,text] of Object.entries(options)) {
         const btn = document.createElement('button');
         btn.className = 'choice-btn';
@@ -116,6 +120,10 @@
         btn.onclick = () => makeChoice(num);
         choicesDiv.appendChild(btn);
       }
+
+      // Show free input box under the buttons
+      document.getElementById('free-input').style.display = 'flex';
+
       setTimeout(()=>choicesDiv.classList.add('show'),100);
     }
 
@@ -140,6 +148,7 @@
     function makeChoice(choiceNum) {
       if(isTyping) return;
       document.getElementById('choices').classList.remove('show');
+      document.getElementById('free-input').style.display = 'none';
       clearSceneImage();
       fetch('/make_choice', {
         method:'POST',
@@ -150,12 +159,39 @@
       }).catch(e=>console.error(e));
     }
 
+    // === Submit Free Text ===
+    function submitFreeText() {
+      if(isTyping) return;
+      const text = document.getElementById("customInput").value.trim();
+      document.getElementById('free-input').style.display = 'none';
+      if (!text) return;
+
+      document.getElementById('choices').classList.remove('show');
+      clearSceneImage();
+
+      fetch('/make_choice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ free_text: text })
+      })
+      .then(res => res.json())
+      .then(data => {
+        updateScene(data.scene, data.options, data.scene_id, data.player_status);
+        document.getElementById("customInput").value = "";
+      })
+      .catch(e => console.error(e));
+    }
+
+    // === Enter key submits free text ===
+    document.addEventListener("keydown", function(e) {
+      if (e.key === "Enter" && document.activeElement.id === "customInput") {
+        submitFreeText();
+      }
+    });
+
     // === Start Button ===
-    // Start button click
     document.getElementById('start-btn').addEventListener('click', function() {
       this.style.display = 'none';
-
-      // After starting, top-align content
       document.getElementById('page').style.justifyContent = 'flex-start';
 
       updatePlayerStatus(initialPlayerStatus);
@@ -163,7 +199,6 @@
         showSceneImage(initialSceneImage, () => updateChoices(initialOptions))
       );
     });
-
 
     // === Footer Buttons ===
     (function initControls(){
