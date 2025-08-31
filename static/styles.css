@@ -222,16 +222,15 @@ h1 {
 
 .choice-btn:hover {
   color: #99ff99;
-  text-shadow: 0 0 8px #99ff99, 0 0 15px #99ff99;
-  background: rgba(0, 255, 0, 0.15);
-  transform: translateX(5px);
+  text-shadow: 0 0 6px #99ff99, 0 0 12px #99ff99;
+  background: rgba(0,255,0,0.05); /* very subtle green glow */
+  transform: translateX(0); 
 }
 
 .choice-btn::before {
-  content: "> ";
-  color: #00ff00;
-  text-shadow: 0 0 5px #00ff00;
+  content: none;
 }
+
 
 /* ===== PLAYER STATUS ===== */
 #player-status {

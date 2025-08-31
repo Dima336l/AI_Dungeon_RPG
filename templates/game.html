@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  <!-- Add a simple favicon to prevent 404 -->
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏰</text></svg>">
   <title>MMO Dungeon</title>
 </head>
 <body>
@@ -30,7 +32,7 @@
                 <button onclick="submitFreeText()">Submit</button>
               </div>
             </div>
-            <div id="player-status" style="display:none;">{{ player_status }}</div>
+            <div id="player-status" style="display:none;">{{ player_status or "HP: 100/100 | MP: 50/50 | Lvl: 1" }}</div>
           </div>
         </div>
         <button id="start-btn">Start Adventure</button>
@@ -42,6 +44,7 @@
   <div class="footer">
     <div id="footer-buttons">
       <button id="music-toggle">🎵 Music</button>
+      <button id="audio-toggle">🔊 Narration</button>
       <button id="restart-btn">🔄 Restart</button>
       <button id="settings-btn">⚙️ Settings</button>
     </div>
@@ -49,49 +52,189 @@
 
   <!-- ===== Scripts ===== -->
   <script>
-    // === Game Data ===
-    const initialSceneText = {{ scene|tojson }};
-    const initialOptions = {{ options|tojson }};
-    const initialSceneImage = "{{ scene_image }}";
-    const initialPlayerStatus = "{{ player_status }}";
+    // === Game Data with Safe Parsing ===
+    let initialSceneText, initialOptions;
+    
+    try {
+      initialSceneText = {{ scene|tojson|safe }};
+      initialOptions = {{ options|tojson|safe }};
+    } catch (e) {
+      console.error('Error parsing initial data:', e);
+      initialSceneText = "Welcome to the world of Elaria! Your adventure begins in the bustling town square.";
+      initialOptions = {
+        1: "Explore the town square",
+        2: "Visit the adventurer's guild", 
+        3: "Check the local shops"
+      };
+    }
+
+    // Ensure we have valid data
+    if (!initialSceneText || initialSceneText === "None") {
+      initialSceneText = "Welcome to the world of Elaria! Your adventure begins in the bustling town square.";
+    }
+    
+    if (!initialOptions || Object.keys(initialOptions).length === 0) {
+      initialOptions = {
+        1: "Explore the town square",
+        2: "Visit the adventurer's guild", 
+        3: "Check the local shops"
+      };
+    }
+
+    const initialSceneImage = "{{ scene_image or '' }}";
+    const initialPlayerStatus = "{{ player_status or 'HP: 100/100 | MP: 50/50 | Lvl: 1' }}";
 
     let isTyping = false;
     let currentSceneId = null;
+    let audioEnabled = true;
+    let musicEnabled = false;
+    let music = null;
+
+    // === Audio Functions (Web Speech API) ===
+    function speakText(text, delay = 0) {
+      if (!audioEnabled || !('speechSynthesis' in window) || !text) return;
+      
+      setTimeout(() => {
+        // Stop any current speech
+        speechSynthesis.cancel();
+        
+        // Clean text for better speech
+        const cleanText = text
+          .replace(/\*\*(.*?)\*\*/g, '$1')  // Remove markdown bold
+          .replace(/\*(.*?)\*/g, '$1')      // Remove markdown italic
+          .replace(/`(.*?)`/g, '$1')        // Remove code backticks
+          .replace(/\.\.\./g, '... ')       // Add pause for ellipsis
+          .replace(/!/g, '! ')              // Add space after exclamation
+          .replace(/\?/g, '? ')             // Add space after question
+          .replace(/\n/g, ' ')              // Replace newlines with spaces
+          .trim();
+
+        if (!cleanText) return;
+
+        const utterance = new SpeechSynthesisUtterance(cleanText);
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        utterance.volume = 0.7;
+        
+        // Try to use a more suitable voice
+        const voices = speechSynthesis.getVoices();
+        let selectedVoice = null;
+        
+        // Priority order for voice selection
+        const voicePreferences = [
+          'Google UK English Female',
+          'Microsoft Zira',
+          'Google US English',
+          'Alex',
+          'Samantha',
+          'Victoria'
+        ];
+        
+        for (const pref of voicePreferences) {
+          selectedVoice = voices.find(voice => voice.name.includes(pref));
+          if (selectedVoice) break;
+        }
+        
+        // Fallback to any female or English voice
+        if (!selectedVoice) {
+          selectedVoice = voices.find(voice => 
+            voice.name.toLowerCase().includes('female') ||
+            voice.name.toLowerCase().includes('zira') ||
+            voice.lang.startsWith('en')
+          );
+        }
+        
+        if (selectedVoice) {
+          utterance.voice = selectedVoice;
+        }
+        
+        speechSynthesis.speak(utterance);
+      }, delay);
+    }
+
+    // === Create Simple Background Music ===
+    function createSimpleMusic() {
+      try {
+        // Create a simple ambient sound using Web Audio API
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.setValueAtTime(220, audioContext.currentTime); // A3 note
+        gainNode.gain.setValueAtTime(0.05, audioContext.currentTime); // Very quiet
+        
+        oscillator.start();
+        
+        return {
+          stop: () => {
+            try {
+              oscillator.stop();
+              audioContext.close();
+            } catch(e) {}
+          },
+          context: audioContext
+        };
+      } catch (e) {
+        console.log('Web Audio API not available');
+        return null;
+      }
+    }
 
     // === Typing Function ===
-    function typeSceneText(sceneText, callback) {
-      const sceneDiv = document.getElementById('scene-text');
-      sceneDiv.textContent = '\u200B'; // prevent initial RTL glitch
-      sceneDiv.classList.add('typing-cursor');
-      isTyping = true;
-      let i = 0;
-      function typeNext() {
+function typeSceneText(sceneText, callback) {
+    const sceneDiv = document.getElementById('scene-text');
+    if (!sceneText) sceneText = "The adventure continues...";
+
+    sceneDiv.textContent = '\u200B';
+    sceneDiv.classList.add('typing-cursor');
+    isTyping = true;
+    let i = 0;
+
+    // Start TTS immediately (only here!)
+    speakText(sceneText, 0);
+
+    function typeNext() {
         if (i < sceneText.length) {
-          sceneDiv.textContent = sceneText.substring(0, i + 1);
-          i++;
-          setTimeout(typeNext, 30);
+            sceneDiv.textContent = sceneText.substring(0, i + 1);
+            i++;
+            setTimeout(typeNext, 45);
         } else {
-          sceneDiv.classList.remove('typing-cursor');
-          isTyping = false;
-          if (callback) setTimeout(callback, 500);
+            sceneDiv.classList.remove('typing-cursor');
+            isTyping = false;
+            if (callback) setTimeout(callback, 200);
         }
-      }
-      typeNext();
     }
+    typeNext();
+}
+
+
 
     // === Scene Image Functions ===
     function clearSceneImage() {
       document.getElementById('scene-image-container').innerHTML = '';
     }
+    
     function showSceneImage(sceneImageUrl, callback) {
-      if (!sceneImageUrl) { if (callback) setTimeout(callback,100); return; }
+      if (!sceneImageUrl) { 
+        if (callback) setTimeout(callback,100); 
+        return; 
+      }
       const container = document.getElementById('scene-image-container');
       container.innerHTML = '';
       const img = document.createElement('img');
       img.src = sceneImageUrl;
       img.alt = 'Scene image';
-      img.onload = () => setTimeout(() => { img.classList.add('show'); if(callback) setTimeout(callback,600); },100);
-      img.onerror = () => { console.log('Image failed to load'); if(callback) setTimeout(callback,100); };
+      img.onload = () => setTimeout(() => { 
+        img.classList.add('show'); 
+        if(callback) setTimeout(callback,600); 
+      },100);
+      img.onerror = () => { 
+        console.log('Image failed to load:', sceneImageUrl); 
+        if(callback) setTimeout(callback,100); 
+      };
       container.appendChild(img);
     }
 
@@ -104,7 +247,7 @@
           if (data.ready && data.image_url) callback(data.image_url);
           else setTimeout(() => checkImageReady(sceneId,callback),500);
         })
-        .catch(e=>{ console.error(e); callback(null); });
+        .catch(e=>{ console.error('Image check error:', e); callback(null); });
     }
 
     // === Choices ===
@@ -112,6 +255,11 @@
       const choicesDiv = document.getElementById('choices');
       choicesDiv.innerHTML = '';
       choicesDiv.classList.remove('show');
+
+      // Handle undefined or null options
+      if (!options) {
+        options = {};
+      }
 
       for (const [num,text] of Object.entries(options)) {
         const btn = document.createElement('button');
@@ -130,42 +278,62 @@
     // === Player Status ===
     function updatePlayerStatus(status) {
       const statusDiv = document.getElementById('player-status');
-      statusDiv.textContent = status;
+      statusDiv.textContent = status || "HP: 100/100 | MP: 50/50 | Lvl: 1";
       statusDiv.style.display = 'block';
     }
 
     // === Update Full Scene ===
-    function updateScene(sceneText, options, sceneId, playerStatus) {
-      updatePlayerStatus(playerStatus);
-      currentSceneId = sceneId;
-      typeSceneText(sceneText, () => {
-        if(sceneId) checkImageReady(sceneId, imgUrl => showSceneImage(imgUrl,()=>updateChoices(options)));
-        else updateChoices(options);
-      });
-    }
+function updateScene(sceneText, options, sceneId, playerStatus) {
+    updatePlayerStatus(playerStatus);
+    currentSceneId = sceneId;
+
+    typeSceneText(sceneText, () => {
+        // Handle image
+        if(sceneId) {
+            checkImageReady(sceneId, imgUrl => {
+                showSceneImage(imgUrl, () => updateChoices(options));
+            });
+        } else {
+            updateChoices(options);
+        }
+    });
+}
+
 
     // === Make Choice ===
     function makeChoice(choiceNum) {
       if(isTyping) return;
+      
+      // Stop current narration
+      if ('speechSynthesis' in window) {
+        speechSynthesis.cancel();
+      }
+      
       document.getElementById('choices').classList.remove('show');
       document.getElementById('free-input').style.display = 'none';
       clearSceneImage();
+      
       fetch('/make_choice', {
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({choice:choiceNum})
       }).then(res=>res.json()).then(data=>{
         updateScene(data.scene, data.options, data.scene_id, data.player_status);
-      }).catch(e=>console.error(e));
+      }).catch(e=>console.error('Choice submission error:', e));
     }
 
     // === Submit Free Text ===
     function submitFreeText() {
       if(isTyping) return;
       const text = document.getElementById("customInput").value.trim();
-      document.getElementById('free-input').style.display = 'none';
       if (!text) return;
 
+      // Stop current narration
+      if ('speechSynthesis' in window) {
+        speechSynthesis.cancel();
+      }
+
+      document.getElementById('free-input').style.display = 'none';
       document.getElementById('choices').classList.remove('show');
       clearSceneImage();
 
@@ -179,7 +347,7 @@
         updateScene(data.scene, data.options, data.scene_id, data.player_status);
         document.getElementById("customInput").value = "";
       })
-      .catch(e => console.error(e));
+      .catch(e => console.error('Free text submission error:', e));
     }
 
     // === Enter key submits free text ===
@@ -195,25 +363,184 @@
       document.getElementById('page').style.justifyContent = 'flex-start';
 
       updatePlayerStatus(initialPlayerStatus);
-      typeSceneText(initialSceneText, () => 
-        showSceneImage(initialSceneImage, () => updateChoices(initialOptions))
-      );
+      
+      // Type the initial scene text and then handle audio/images
+      typeSceneText(initialSceneText, () => {
+        
+        // Show initial image and choices
+        showSceneImage(initialSceneImage, () => updateChoices(initialOptions));
+      });
     });
 
-    // === Footer Buttons ===
+    // === Footer Buttons with Error Handling ===
     (function initControls(){
-      const musicBtn=document.getElementById('music-toggle');
-      const restartBtn=document.getElementById('restart-btn');
-      const settingsBtn=document.getElementById('settings-btn');
-      if(!musicBtn||!restartBtn||!settingsBtn) return;
-      let music=null,musicPlaying=false;
-      try{ music = new Audio("{{ url_for('static', filename='music.mp3') }}"); music.loop=true;}catch(e){}
-      musicBtn.addEventListener('click',()=>{if(!music)return; musicPlaying?music.pause():music.play(); musicPlaying=!musicPlaying;});
-      restartBtn.addEventListener('click',()=>{window.location.href="/";});
-      settingsBtn.addEventListener('click',()=>{alert("Settings coming soon!");});
-    })();
-  </script>
+      const musicBtn = document.getElementById('music-toggle');
+      const audioBtn = document.getElementById('audio-toggle');
+      const restartBtn = document.getElementById('restart-btn');
+      const settingsBtn = document.getElementById('settings-btn');
+      
+      if(!musicBtn || !audioBtn || !restartBtn || !settingsBtn) {
+        console.error('Some footer buttons not found');
+        return;
+      }
+      
+      let musicPlaying = false;
+      let ambientMusic = null;
+      
+      // Check if music file exists before trying to load
+      function checkMusicFile() {
+        return fetch("{{ url_for('static', filename='music.mp3') }}", {method: 'HEAD'})
+          .then(response => response.ok)
+          .catch(() => false);
+      }
+      
+      musicBtn.addEventListener('click', async () => {
+        if (!ambientMusic) {
+          // Try to load actual music file first
+          const musicExists = await checkMusicFile();
+          
+          if (musicExists) {
+            try {
+              ambientMusic = new Audio("{{ url_for('static', filename='music.mp3') }}");
+              ambientMusic.loop = true;
+              ambientMusic.volume = 0.2;
+            } catch (e) {
+              ambientMusic = null;
+            }
+          }
+          
+          // If no music file, create simple ambient sound
+          if (!ambientMusic) {
+            ambientMusic = createSimpleMusic();
+            if (!ambientMusic) {
+              musicBtn.textContent = '🎵 No Audio';
+              musicBtn.disabled = true;
+              return;
+            }
+          }
+        }
+        
+        if (musicPlaying) {
+          if (ambientMusic.pause) {
+            ambientMusic.pause();
+          } else if (ambientMusic.stop) {
+            ambientMusic.stop();
+          }
+          musicBtn.textContent = '🎵 Music OFF';
+        } else {
+          if (ambientMusic.play) {
+            ambientMusic.play().catch(e => {
+              console.log('Music play failed:', e);
+              musicBtn.textContent = '🎵 Music Error';
+            });
+          }
+          musicBtn.textContent = '🎵 Music ON';
+        }
+        musicPlaying = !musicPlaying;
+      });
+      
+      audioBtn.addEventListener('click', () => {
+        audioEnabled = !audioEnabled;
+        audioBtn.textContent = audioEnabled ? '🔊 Narration ON' : '🔊 Narration OFF';
+        
+        if (!audioEnabled && 'speechSynthesis' in window) {
+          speechSynthesis.cancel();
+        }
+      });
+      
+      restartBtn.addEventListener('click', () => {
+        if ('speechSynthesis' in window) speechSynthesis.cancel();
+        if (ambientMusic && ambientMusic.pause) ambientMusic.pause();
+        if (ambientMusic && ambientMusic.stop) ambientMusic.stop();
+        window.location.href = "/";
+      });
+      
+      settingsBtn.addEventListener('click', () => {
+        const speechAvailable = 'speechSynthesis' in window;
+        const voiceCount = speechAvailable ? speechSynthesis.getVoices().length : 0;
+        
+        const settings = `Audio Settings:
+• Narration: ${audioEnabled ? 'ON' : 'OFF'}
+• Music: ${musicPlaying ? 'ON' : 'OFF'}
+• Speech Synthesis: ${speechAvailable ? 'Available' : 'Not Available'}
+• Voices Available: ${voiceCount}
 
-  <script src="{{ url_for('static', filename='script.js') }}"></script>
+Controls:
+• Click narration button to toggle voice
+• Music uses simple ambient tones
+• Restart to reset everything`;
+        
+        alert(settings);
+      });
+    })();
+
+    // === Create Simple Background Music ===
+    function createSimpleMusic() {
+      try {
+        // Create a simple ambient sound using Web Audio API
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // Create multiple oscillators for a richer ambient sound
+        const oscillators = [];
+        const gainNodes = [];
+        
+        // Base drone
+        const osc1 = audioContext.createOscillator();
+        const gain1 = audioContext.createGain();
+        osc1.frequency.setValueAtTime(110, audioContext.currentTime); // A2
+        gain1.gain.setValueAtTime(0.03, audioContext.currentTime);
+        osc1.connect(gain1);
+        gain1.connect(audioContext.destination);
+        oscillators.push(osc1);
+        gainNodes.push(gain1);
+        
+        // Harmonic
+        const osc2 = audioContext.createOscillator();
+        const gain2 = audioContext.createGain();
+        osc2.frequency.setValueAtTime(165, audioContext.currentTime); // E3
+        gain2.gain.setValueAtTime(0.02, audioContext.currentTime);
+        osc2.connect(gain2);
+        gain2.connect(audioContext.destination);
+        oscillators.push(osc2);
+        gainNodes.push(gain2);
+        
+        // Start all oscillators
+        oscillators.forEach(osc => osc.start());
+        
+        return {
+          stop: () => {
+            try {
+              oscillators.forEach(osc => osc.stop());
+              audioContext.close();
+            } catch(e) {}
+          },
+          pause: () => {
+            gainNodes.forEach(gain => gain.gain.setValueAtTime(0, audioContext.currentTime));
+          },
+          play: () => {
+            return Promise.resolve().then(() => {
+              gainNodes[0].gain.setValueAtTime(0.03, audioContext.currentTime);
+              gainNodes[1].gain.setValueAtTime(0.02, audioContext.currentTime);
+            });
+          },
+          context: audioContext
+        };
+      } catch (e) {
+        console.log('Web Audio API not available');
+        return null;
+      }
+    }
+
+    // === Load voices when they become available ===
+    if ('speechSynthesis' in window) {
+      speechSynthesis.onvoiceschanged = () => {
+        console.log('Voices loaded:', speechSynthesis.getVoices().length);
+      };
+      
+      // Initial voice loading
+      speechSynthesis.getVoices();
+    }
+
+  </script>
 </body>
 </html>
