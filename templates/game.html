@@ -184,7 +184,7 @@
     }
 
     // === Typing Function ===
-function typeSceneText(sceneText, callback) {
+function typeSceneText(sceneText, callback, typingDelay = 45) {
     const sceneDiv = document.getElementById('scene-text');
     if (!sceneText) sceneText = "The adventure continues...";
 
@@ -200,7 +200,7 @@ function typeSceneText(sceneText, callback) {
         if (i < sceneText.length) {
             sceneDiv.textContent = sceneText.substring(0, i + 1);
             i++;
-            setTimeout(typeNext, 45);
+            setTimeout(typeNext, typingDelay);
         } else {
             sceneDiv.classList.remove('typing-cursor');
             isTyping = false;
@@ -239,13 +239,13 @@ function typeSceneText(sceneText, callback) {
     }
 
     // === Image Polling ===
-    function checkImageReady(sceneId, callback) {
+    function checkImageReady(sceneId, callback, pollInterval = 200) {
       if (!sceneId) { callback(null); return; }
       fetch(`/get_image/${sceneId}`)
         .then(res => res.json())
         .then(data => {
           if (data.ready && data.image_url) callback(data.image_url);
-          else setTimeout(() => checkImageReady(sceneId,callback),500);
+          else setTimeout(() => checkImageReady(sceneId, callback, pollInterval), pollInterval);
         })
         .catch(e=>{ console.error('Image check error:', e); callback(null); });
     }
@@ -287,15 +287,42 @@ function updateScene(sceneText, options, sceneId, playerStatus) {
     updatePlayerStatus(playerStatus);
     currentSceneId = sceneId;
 
-    typeSceneText(sceneText, () => {
-        // Handle image
-        if(sceneId) {
-            checkImageReady(sceneId, imgUrl => {
-                showSceneImage(imgUrl, () => updateChoices(options));
-            });
-        } else {
+    // Start checking for image immediately (don't wait for text to finish)
+    let imageReady = false;
+    let imageUrl = null;
+    let textFinished = false;
+    
+    // Function to show image and choices when both are ready
+    function showImageAndChoices() {
+        if (textFinished && imageReady && imageUrl) {
+            showSceneImage(imageUrl, () => updateChoices(options));
+        } else if (textFinished && !sceneId) {
+            // No image needed
             updateChoices(options);
+        } else if (textFinished && sceneId && !imageReady) {
+            // Text finished but image not ready yet - check more frequently (100ms)
+            checkImageReady(sceneId, imgUrl => {
+                imageReady = true;
+                imageUrl = imgUrl;
+                showSceneImage(imgUrl, () => updateChoices(options));
+            }, 100);
         }
+    }
+    
+    if(sceneId) {
+        // Start polling for image right away (parallel with text typing)
+        checkImageReady(sceneId, imgUrl => {
+            imageReady = true;
+            imageUrl = imgUrl;
+            showImageAndChoices(); // Show if text is already done
+        });
+    }
+
+    // Start typing with original speed (45ms per character)
+    typeSceneText(sceneText, () => {
+        // Text finished
+        textFinished = true;
+        showImageAndChoices(); // Show image if ready, or wait for it
     });
 }
 
@@ -364,7 +391,7 @@ function updateScene(sceneText, options, sceneId, playerStatus) {
 
       updatePlayerStatus(initialPlayerStatus);
       
-      // Type the initial scene text and then handle audio/images
+      // Type the initial scene text with original speed
       typeSceneText(initialSceneText, () => {
         
         // Show initial image and choices
