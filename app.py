@@ -60,27 +60,34 @@ def sanitize_filename(s, max_length=50):
     s = s.strip().replace(' ', '_')
     return s[:max_length]
 
+def _first_sentences(text, max_chars=380):
+    """Take the first 1–2 sentences of scene text for a focused image prompt."""
+    text = (text or "").strip()
+    if len(text) <= max_chars:
+        return text
+    chunk = text[: max_chars + 1]
+    last_period = chunk.rfind(". ")
+    last_exclamation = chunk.rfind("! ")
+    last_question = chunk.rfind("? ")
+    cut = max(last_period, last_exclamation, last_question)
+    if cut > max_chars // 2:
+        return text[: cut + 1].strip()
+    # Fallback: cut at last space to avoid mid-word
+    last_space = chunk.rfind(" ")
+    if last_space > max_chars // 2:
+        return text[:last_space].strip()
+    return text[:max_chars].strip()
+
+
 def enhance_image_prompt(scene_text):
-    """Enhance the scene text with MMO fantasy style"""
-    scene_lower = scene_text.lower()
-    base_style = "fantasy MMO concept art, vibrant colors, atmospheric lighting, detailed digital painting, cinematic composition"
-
-    if any(word in scene_lower for word in ['town', 'village', 'square', 'market']):
-        atmosphere = "bustling streets, NPCs, medieval architecture, MMO town hub"
-    elif any(word in scene_lower for word in ['field', 'plains', 'forest', 'meadow']):
-        atmosphere = "open world environment, lush landscapes, colorful sky, MMORPG field area"
-    elif any(word in scene_lower for word in ['dungeon', 'cave', 'crypt']):
-        atmosphere = "dark fantasy interior, glowing crystals, MMO dungeon atmosphere"
-    elif any(word in scene_lower for word in ['boss', 'raid', 'dragon', 'monster']):
-        atmosphere = "epic battle scene, large scale raid boss, dramatic lighting, MMO raid"
-    elif any(word in scene_lower for word in ['castle', 'fortress', 'keep']):
-        atmosphere = "grand fortress, guild banners, fantasy castle hub"
-    elif any(word in scene_lower for word in ['magic', 'spell', 'arcane']):
-        atmosphere = "mystical energy, glowing runes, anime-style magic effects"
-    else:
-        atmosphere = "general MMORPG fantasy atmosphere, vibrant and lively"
-
-    return f"{scene_text}, {base_style}, {atmosphere}, professional fantasy MMO art"
+    """Build an image prompt that prioritizes the specific story content, then adds style."""
+    if not (scene_text and scene_text.strip()):
+        return "children's storybook illustration, peaceful village scene, soft colors, kid-friendly"
+    # Use the beginning of the scene so the image reflects THIS story moment
+    story_lead = _first_sentences(scene_text, max_chars=380)
+    # Short style suffix so the model illustrates the story first
+    style = "children's storybook illustration, soft colors, warm lighting, kid-friendly fable"
+    return f"{story_lead}. {style}"
 
 def get_scene_image(scene_text):
     enhanced_prompt = enhance_image_prompt(scene_text)
@@ -117,34 +124,35 @@ def index():
         session['player'] = Player().__dict__
         session['history'] = []
 
-        mmo_intro = {
+        fables_intro = {
             'role': 'system',
             'content': (
-                "You are the AI Game Master of a massive multiplayer online RPG. "
-                "Write detailed, immersive scene descriptions that are at least 600-700 characters long. "
-                "Describe the environment, atmosphere, sounds, and visual details in vivid detail. "
-                "Use 4-6 sentences to paint a rich picture of the scene. "
-                "After the scene description, always give 2 or 3 clear numbered options for the player to choose from. "
-                "Keep the style immersive and game-like, as if the player is seeing a live MMO feed. "
+                "You are a gentle Storyteller for a children's fables game. Write for young kids (around 5–9 years). "
+                "Use SIMPLE, kid-friendly words only. Avoid hard words like: piqued, rustic, mingling, clutches, curiosity, ancient, bustling, tinkle, gaze, slung, and similar. "
+                "Use words kids know: happy, big, little, soft, nice, pretty, sunny, cozy, friendly, hold, carry, look, hear, smell, run, walk, and short sentences. "
+                "Write friendly, wholesome scene descriptions that are at least 600-700 characters long. "
+                "Use a warm, storybook tone. Describe the environment, sounds, and what you see in a way that is vivid but never scary or violent. "
+                "Start each scene with clear, concrete details that can be illustrated: who is there (characters, animals), what they are doing, and the specific place (e.g. a little house, a bridge over a stream, a market stall). "
+                "Use 4-6 sentences. After the scene description, always give 2 or 3 clear numbered options for the young player to choose from. "
+                "Keep the style like a spoken bedtime story—magical, kind, and full of wonder, but with easy words. "
                 "Never prefix your responses with 'Scene:'. "
-                "Occasionally hint at quests, loot, skills, or social interactions. "
-                "The scene description should be substantial enough to take about 25-30 seconds to read."
+                "Include friendly animals, gentle magic, kind characters, and simple lessons when it fits. "
+                "The scene description should be substantial enough to take about 25-30 seconds to read aloud."
             )
         }
 
         initial_prompt = (
-            "You log into the world of Elaria, a vast fantasy MMO. "
-            "You're standing in the lively starter town square, surrounded by adventurers preparing for quests. "
-            "Say something short and immersive, then give 3 numbered options for what the player can do next."
+            "Once upon a time, in a peaceful village by a sunny forest, a young hero sets out on a gentle adventure. "
+            "Describe this opening scene in a warm, storybook way using only simple words that a young child can understand. Then give 3 numbered options for what the hero can do next."
         )
 
-        session['history'] = [mmo_intro, {'role': 'user', 'content': initial_prompt}]
+        session['history'] = [fables_intro, {'role': 'user', 'content': initial_prompt}]
         try:
             ai_intro_response = generate_response(session['history'])
         except ConnectionError:
             return render_template("ollama_error.html")
         session['history'].append({'role': 'assistant', 'content': ai_intro_response})
-        session['player_status'] = "HP: 100/100 | MP: 50/50 | Lvl: 1 | Gear: Basic Sword"
+        session['player_status'] = "Story: Chapter 1 — Your tale has begun"
 
     last_ai_msg = session['history'][-1]['content']
     scene_text = clean_scene_text(last_ai_msg)

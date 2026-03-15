@@ -6,13 +6,13 @@
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
   <!-- Add a simple favicon to prevent 404 -->
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏰</text></svg>">
-  <title>MMO Dungeon</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>">
+  <title>Fables</title>
 </head>
 <body>
 
   <!-- Header -->
-  <h1 class="page-title">MMO Dungeon</h1>
+  <h1 class="page-title">Fables</h1>
 
   <!-- Main content: monitor + start button -->
   <div class="main-content">
@@ -21,7 +21,7 @@
       <div class="monitor-screen">
         <div id="book-container">
           <div id="page">
-            <h1>AI Dungeon</h1>
+            <h1>Storytime</h1>
             <div id="content-area">
               <div id="scene-text"></div>
               <div id="scene-image-container"></div>
@@ -32,7 +32,7 @@
                 <button onclick="submitFreeText()">Submit</button>
               </div>
             </div>
-            <div id="player-status" style="display:none;">{{ player_status or "HP: 100/100 | MP: 50/50 | Lvl: 1" }}</div>
+            <div id="player-status" style="display:none;">{{ player_status or "Story: Chapter 1" }}</div>
           </div>
         </div>
         <button id="start-btn">Start Adventure</button>
@@ -43,8 +43,8 @@
   <!-- Footer -->
   <div class="footer">
     <div id="footer-buttons">
-      <button id="music-toggle">🎵 Music</button>
-      <button id="audio-toggle">🔊 Narration</button>
+      <button id="music-toggle">🎵 Music ON</button>
+      <button id="audio-toggle">🔊 Narration ON</button>
       <button id="restart-btn">🔄 Restart</button>
       <button id="settings-btn">⚙️ Settings</button>
     </div>
@@ -60,30 +60,30 @@
       initialOptions = {{ options|tojson|safe }};
     } catch (e) {
       console.error('Error parsing initial data:', e);
-      initialSceneText = "Welcome to the world of Elaria! Your adventure begins in the bustling town square.";
+      initialSceneText = "Once upon a time, in a peaceful village by a sunny forest, your story begins...";
       initialOptions = {
-        1: "Explore the town square",
-        2: "Visit the adventurer's guild", 
-        3: "Check the local shops"
+        1: "Explore the village square",
+        2: "Visit the old storyteller by the well",
+        3: "Follow the path into the friendly forest"
       };
     }
 
     // Ensure we have valid data
     if (!initialSceneText || initialSceneText === "None") {
-      initialSceneText = "Welcome to the world of Elaria! Your adventure begins in the bustling town square.";
+      initialSceneText = "Once upon a time, in a peaceful village by a sunny forest, your story begins...";
     }
     
     if (!initialOptions || Object.keys(initialOptions).length === 0) {
       initialOptions = {
-        1: "Explore the town square",
-        2: "Visit the adventurer's guild", 
-        3: "Check the local shops"
+        1: "Explore the village square",
+        2: "Visit the old storyteller by the well",
+        3: "Follow the path into the friendly forest"
       };
     }
 
     const initialSceneImage = "{{ scene_image or '' }}";
     const initialSceneId = "{{ initial_scene_id or '' }}";
-    const initialPlayerStatus = "{{ player_status or 'HP: 100/100 | MP: 50/50 | Lvl: 1' }}";
+    const initialPlayerStatus = "{{ player_status or 'Story: Chapter 1' }}";
 
     let isTyping = false;
     let currentSceneId = null;
@@ -284,7 +284,7 @@ function typeSceneText(sceneText, callback, typingDelay = 45) {
     // === Player Status ===
     function updatePlayerStatus(status) {
       const statusDiv = document.getElementById('player-status');
-      statusDiv.textContent = status || "HP: 100/100 | MP: 50/50 | Lvl: 1";
+      statusDiv.textContent = status || "Story: Chapter 1";
       statusDiv.style.display = 'block';
     }
 
@@ -388,6 +388,7 @@ function updateScene(sceneText, options, sceneId, playerStatus) {
       document.getElementById('page').style.justifyContent = 'flex-start';
 
       updatePlayerStatus(initialPlayerStatus);
+      if (window.ensureMusicAndStart) window.ensureMusicAndStart();
       
       // Type text first; only after typing is done, show image then choices
       typeSceneText(initialSceneText, () => {
@@ -416,59 +417,53 @@ function updateScene(sceneText, options, sceneId, playerStatus) {
         return;
       }
       
-      let musicPlaying = false;
+      let musicPlaying = true;  // On by default, like narration
       let ambientMusic = null;
       
-      // Check if music file exists before trying to load
       function checkMusicFile() {
         return fetch("{{ url_for('static', filename='music.mp3') }}", {method: 'HEAD'})
           .then(response => response.ok)
           .catch(() => false);
       }
       
-      musicBtn.addEventListener('click', async () => {
+      // Start music on first user gesture (browsers require this). Call from Start button or when toggling music ON.
+      window.ensureMusicAndStart = async function() {
+        if (!musicPlaying) return;
+        if (ambientMusic) {
+          if (ambientMusic.play) ambientMusic.play().catch(() => {});
+          return;
+        }
+        const musicExists = await checkMusicFile();
+        if (musicExists) {
+          try {
+            ambientMusic = new Audio("{{ url_for('static', filename='music.mp3') }}");
+            ambientMusic.loop = true;
+            ambientMusic.volume = 0.4;
+            await ambientMusic.play();
+          } catch (e) {
+            ambientMusic = null;
+          }
+        }
         if (!ambientMusic) {
-          // Try to load actual music file first
-          const musicExists = await checkMusicFile();
-          
-          if (musicExists) {
-            try {
-              ambientMusic = new Audio("{{ url_for('static', filename='music.mp3') }}");
-              ambientMusic.loop = true;
-              ambientMusic.volume = 0.2;
-            } catch (e) {
-              ambientMusic = null;
-            }
-          }
-          
-          // If no music file, create simple ambient sound
-          if (!ambientMusic) {
-            ambientMusic = createSimpleMusic();
-            if (!ambientMusic) {
-              musicBtn.textContent = '🎵 No Audio';
-              musicBtn.disabled = true;
-              return;
-            }
+          ambientMusic = createSimpleMusic();
+          if (ambientMusic && ambientMusic.play) await ambientMusic.play();
+          else if (!ambientMusic) {
+            musicBtn.textContent = '🎵 No Audio';
+            musicBtn.disabled = true;
           }
         }
-        
-        if (musicPlaying) {
-          if (ambientMusic.pause) {
-            ambientMusic.pause();
-          } else if (ambientMusic.stop) {
-            ambientMusic.stop();
-          }
-          musicBtn.textContent = '🎵 Music OFF';
-        } else {
-          if (ambientMusic.play) {
-            ambientMusic.play().catch(e => {
-              console.log('Music play failed:', e);
-              musicBtn.textContent = '🎵 Music Error';
-            });
-          }
-          musicBtn.textContent = '🎵 Music ON';
-        }
+      };
+      
+      musicBtn.addEventListener('click', async () => {
         musicPlaying = !musicPlaying;
+        musicBtn.textContent = musicPlaying ? '🎵 Music ON' : '🎵 Music OFF';
+        
+        if (!musicPlaying) {
+          if (ambientMusic && ambientMusic.pause) ambientMusic.pause();
+          else if (ambientMusic && ambientMusic.stop) ambientMusic.stop();
+        } else {
+          await window.ensureMusicAndStart();
+        }
       });
       
       audioBtn.addEventListener('click', () => {
@@ -512,36 +507,32 @@ Controls:
     // === Create Simple Background Music ===
     function createSimpleMusic() {
       try {
-        // Create a simple ambient sound using Web Audio API
         const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-        
-        // Create multiple oscillators for a richer ambient sound
         const oscillators = [];
         const gainNodes = [];
-        
-        // Base drone
+        const VOL = 0.12;   // Audible but not loud
+        const VOL2 = 0.08;
+
         const osc1 = audioContext.createOscillator();
         const gain1 = audioContext.createGain();
-        osc1.frequency.setValueAtTime(110, audioContext.currentTime); // A2
-        gain1.gain.setValueAtTime(0.03, audioContext.currentTime);
+        osc1.frequency.setValueAtTime(220, audioContext.currentTime);
+        gain1.gain.setValueAtTime(0, audioContext.currentTime);
         osc1.connect(gain1);
         gain1.connect(audioContext.destination);
         oscillators.push(osc1);
         gainNodes.push(gain1);
-        
-        // Harmonic
+
         const osc2 = audioContext.createOscillator();
         const gain2 = audioContext.createGain();
-        osc2.frequency.setValueAtTime(165, audioContext.currentTime); // E3
-        gain2.gain.setValueAtTime(0.02, audioContext.currentTime);
+        osc2.frequency.setValueAtTime(330, audioContext.currentTime);
+        gain2.gain.setValueAtTime(0, audioContext.currentTime);
         osc2.connect(gain2);
         gain2.connect(audioContext.destination);
         oscillators.push(osc2);
         gainNodes.push(gain2);
-        
-        // Start all oscillators
+
         oscillators.forEach(osc => osc.start());
-        
+
         return {
           stop: () => {
             try {
@@ -553,10 +544,11 @@ Controls:
             gainNodes.forEach(gain => gain.gain.setValueAtTime(0, audioContext.currentTime));
           },
           play: () => {
-            return Promise.resolve().then(() => {
-              gainNodes[0].gain.setValueAtTime(0.03, audioContext.currentTime);
-              gainNodes[1].gain.setValueAtTime(0.02, audioContext.currentTime);
-            });
+            return (audioContext.state === 'suspended' ? audioContext.resume() : Promise.resolve())
+              .then(() => {
+                gainNodes[0].gain.setValueAtTime(VOL, audioContext.currentTime);
+                gainNodes[1].gain.setValueAtTime(VOL2, audioContext.currentTime);
+              });
           },
           context: audioContext
         };

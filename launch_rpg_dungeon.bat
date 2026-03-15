@@ -2,7 +2,7 @@
 setlocal enabledelayedexpansion
 
 :: ========================================
-:: RPG Dungeon AI - Launch Script
+:: Fables - Launch Script
 :: ========================================
 :: This script launches the required services:
 :: 1. Ollama (LLM for narrative generation)
@@ -11,7 +11,7 @@ setlocal enabledelayedexpansion
 
 echo.
 echo ========================================
-echo    RPG Dungeon AI - Launch Script
+echo    Fables - Launch Script
 echo ========================================
 echo.
 
@@ -181,7 +181,7 @@ if %errorlevel% equ 0 (
 )
 
 echo Starting Flask server...
-start "RPG Dungeon Flask Server" cmd /k "cd /d %PROJECT_DIR% && %VENV_DIR%\Scripts\activate.bat && python app.py"
+start "Fables - Flask Server" cmd /k "cd /d %PROJECT_DIR% && %VENV_DIR%\Scripts\activate.bat && python app.py"
 set FLASK_RUNNING=1
 echo Flask server startup initiated!
 

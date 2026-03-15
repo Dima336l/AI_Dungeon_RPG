@@ -6,7 +6,7 @@ import random
 import hashlib
 from urllib import request
 
-# Workflow JSON for RPG asset generation
+# Workflow JSON for fables / storybook scene generation
 prompt_text = '''{
   "7": {
     "inputs": {
@@ -81,7 +81,7 @@ prompt_text = '''{
   }
 }'''
 
-COMFYUI_OUTPUT_DIR = r"C:\Users\nirca\repos\ComfyUI-master\output"
+COMFYUI_OUTPUT_DIR = r"C:\Users\nirca\repos\rpg_dungeon_ai\assets"
 TARGET_DIR = r"C:\Users\nirca\repos\rpg_dungeon_ai\static\images"
 
 def queue_prompt(workflow):
@@ -200,10 +200,8 @@ def generate_image_from_text(scene_description):
         # Prepare the workflow
         prompt = json.loads(prompt_text)
         
-        # Set the scene description as the positive prompt
-        prompt["15"]["inputs"]["text"] = f"""
-RPG dungeon scene, atmospheric, detailed, cinematic lighting, {scene_description}
-"""
+        # Use the scene description as the main prompt (story content first, style already in from app)
+        prompt["15"]["inputs"]["text"] = scene_description.strip()
         
         # Negative prompt to avoid unwanted elements
         prompt["16"]["inputs"]["text"] = """
@@ -278,7 +276,7 @@ def test_generation():
         return
     
     print("\n=== Testing Image Generation ===")
-    test_scene = "dark dungeon corridor with torch lighting and stone walls"
+    test_scene = "peaceful village square with a friendly well and sunshine"
     result = generate_image_from_text(test_scene)
     if result:
         print(f"Test successful! Image saved to: {result}")
