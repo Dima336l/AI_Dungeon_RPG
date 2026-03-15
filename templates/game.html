@@ -19,6 +19,40 @@
     <div class="monitor-frame">
       <img src="{{ url_for('static', filename='retro_monitor.jpg') }}" alt="Retro Monitor" class="monitor-img" />
       <div class="monitor-screen">
+        {% if choose_start %}
+        <div id="start-chooser">
+          <h2 class="start-chooser-title">Where does your story begin?</h2>
+          <div class="start-options">
+            {% for o in start_options %}
+            <a href="{{ url_for('index', start=o.id) }}" class="start-option" title="{{ o.label }}">
+              <img src="{{ url_for('static', filename=o.image) }}" alt="{{ o.label }}" />
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+        {% elif choose_character %}
+        <div id="character-chooser">
+          <h2 class="character-chooser-title">Choose your hero</h2>
+          <div class="character-options">
+            {% for o in character_options %}
+            <a href="{{ url_for('index', start=start_id, character=o.id) }}" class="character-option" title="{{ o.label }}">
+              <img src="{{ url_for('static', filename=o.image) }}" alt="{{ o.label }}" />
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+        {% elif choose_companion %}
+        <div id="companion-chooser">
+          <h2 class="companion-chooser-title">Choose your companion</h2>
+          <div class="companion-options">
+            {% for o in companion_options %}
+            <a href="{{ url_for('index', start=start_id, character=character_id, companion=o.id) }}" class="companion-option" title="{{ o.label }}">
+              <img src="{{ url_for('static', filename=o.image) }}" alt="{{ o.label }}" />
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+        {% else %}
         <div id="book-container">
           <div id="page">
             <h1>Storytime</h1>
@@ -36,6 +70,7 @@
           </div>
         </div>
         <button id="start-btn">Start Adventure</button>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -382,15 +417,16 @@ function updateScene(sceneText, options, sceneId, playerStatus) {
       }
     });
 
-    // === Start Button ===
-    document.getElementById('start-btn').addEventListener('click', function() {
-      this.style.display = 'none';
-      document.getElementById('page').style.justifyContent = 'flex-start';
+    // === Start adventure (run on button click or automatically when returning from start chooser) ===
+    function runStartAdventure() {
+      const startBtn = document.getElementById('start-btn');
+      const pageEl = document.getElementById('page');
+      if (startBtn) startBtn.style.display = 'none';
+      if (pageEl) pageEl.style.justifyContent = 'flex-start';
 
       updatePlayerStatus(initialPlayerStatus);
       if (window.ensureMusicAndStart) window.ensureMusicAndStart();
       
-      // Type text first; only after typing is done, show image then choices
       typeSceneText(initialSceneText, () => {
         if (initialSceneImage) {
           showSceneImage(initialSceneImage, () => updateChoices(initialOptions));
@@ -403,7 +439,17 @@ function updateScene(sceneText, options, sceneId, playerStatus) {
           updateChoices(initialOptions);
         }
       });
-    });
+    }
+
+    const startBtn = document.getElementById('start-btn');
+    if (startBtn) {
+      startBtn.addEventListener('click', runStartAdventure);
+      // Auto-start when page has a scene (user just chose a start place)
+      if (initialSceneText && initialSceneText.length > 0) {
+        startBtn.style.display = 'none';
+        runStartAdventure();
+      }
+    }
 
     // === Footer Buttons with Error Handling ===
     (function initControls(){
