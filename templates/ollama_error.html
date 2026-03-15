@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🏰</text></svg>">
+  <title>Ollama not running – MMO Dungeon</title>
+</head>
+<body>
+  <h1 class="page-title">MMO Dungeon</h1>
+  <div class="main-content">
+    <div class="monitor-frame">
+      <img src="{{ url_for('static', filename='retro_monitor.jpg') }}" alt="Retro Monitor" class="monitor-img" />
+      <div class="monitor-screen">
+        <div id="book-container">
+          <div id="page">
+            <h1>AI Dungeon</h1>
+            <div id="content-area" style="padding: 1.5em; text-align: center;">
+              <p style="margin-bottom: 1em;">⚠️ Failed to connect to Ollama.</p>
+              <p style="margin-bottom: 1em;">The game needs Ollama running for the AI narrative. Start it first, then retry.</p>
+              <p style="margin-bottom: 1.5em; font-size: 0.9em;">Run <strong>launch_rpg_dungeon.bat</strong> to start Ollama, ComfyUI, and the game together. Or start Ollama from the tray/app, then refresh.</p>
+              <p style="margin-bottom: 1em;"><a href="https://ollama.com/download" target="_blank" rel="noopener">Download Ollama</a></p>
+              <p><a href="{{ url_for('index') }}" class="start-btn" style="display: inline-block; margin-top: 0.5em; padding: 0.6em 1.2em;">🔄 Retry</a></p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

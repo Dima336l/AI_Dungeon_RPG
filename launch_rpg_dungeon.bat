@@ -5,8 +5,9 @@ setlocal enabledelayedexpansion
 :: RPG Dungeon AI - Launch Script
 :: ========================================
 :: This script launches the required services:
-:: 1. ComfyUI (Image Generation Backend)
-:: 2. Flask Web Server (Frontend)
+:: 1. Ollama (LLM for narrative generation)
+:: 2. ComfyUI (Image Generation Backend)
+:: 3. Flask Web Server (Frontend)
 
 echo.
 echo ========================================
@@ -45,14 +46,80 @@ if not exist "%VENV_DIR%" (
 cd /d "%PROJECT_DIR%"
 
 :: Initialize service flags
+set OLLAMA_RUNNING=0
 set COMFYUI_RUNNING=0
 set FLASK_RUNNING=0
+
+:: ========================================
+:: STEP 0: Start Ollama (LLM)
+:: ========================================
+echo.
+echo [1/3] Starting Ollama (LLM for narrative generation)...
+echo ========================================
+
+:: Check if Ollama is already responding on port 11434 (we still open the terminal below)
+netstat -an | findstr ":11434 " >nul
+if %errorlevel% equ 0 (
+    set OLLAMA_ALREADY=1
+) else (
+    set OLLAMA_ALREADY=0
+)
+
+:: Find Ollama: try PATH first, then default Windows install path
+set OLLAMA_CMD=
+where ollama >nul 2>&1
+if %errorlevel% equ 0 (
+    set OLLAMA_CMD=ollama serve
+) else (
+    if exist "%LOCALAPPDATA%\Programs\Ollama\ollama.exe" (
+        set OLLAMA_CMD="%LOCALAPPDATA%\Programs\Ollama\ollama.exe" serve
+    ) else if exist "%LOCALAPPDATA%\Programs\Ollama\Ollama.exe" (
+        set OLLAMA_CMD="%LOCALAPPDATA%\Programs\Ollama\Ollama.exe" serve
+    )
+)
+
+if "!OLLAMA_CMD!"=="" (
+    echo WARNING: Ollama not found in PATH or at %LOCALAPPDATA%\Programs\Ollama
+    echo Please install Ollama from https://ollama.com/download or start it manually, then press any key...
+    pause >nul
+    set OLLAMA_RUNNING=1
+    goto :ollama_done
+)
+
+:: Always open the Ollama terminal so the user sees it running
+start "Ollama" cmd /k !OLLAMA_CMD!
+set OLLAMA_RUNNING=1
+echo Ollama terminal opened.
+
+if !OLLAMA_ALREADY! equ 1 (
+    echo Ollama already running on port 11434 - skipping wait.
+    goto :ollama_done
+)
+echo Ollama launched.
+
+:ollama_wait
+echo Giving Ollama time to start and detect GPU (about 12 seconds)...
+timeout /t 12 /nobreak >nul
+echo Checking if Ollama API is ready...
+set OLLAMA_READY=0
+for /L %%i in (1,1,30) do (
+    powershell -NoProfile -Command "try { $r = Invoke-WebRequest -Uri 'http://127.0.0.1:11434/api/tags' -UseBasicParsing -TimeoutSec 3; exit 0 } catch { exit 1 }" >nul 2>&1
+    if !errorlevel! equ 0 (
+        set OLLAMA_READY=1
+        echo Ollama is ready.
+        goto :ollama_done
+    )
+    echo   Attempt %%i/30 - waiting 1 sec...
+    timeout /t 1 /nobreak >nul
+)
+echo WARNING: Ollama did not respond within 30 seconds. Continuing anyway - ensure Ollama is running.
+:ollama_done
 
 :: ========================================
 :: STEP 1: Start ComfyUI (Backend)
 :: ========================================
 echo.
-echo [1/2] Starting ComfyUI (Image Generation Backend)...
+echo [2/3] Starting ComfyUI (Image Generation Backend)...
 echo ========================================
 
 :: Check if port 8188 is in use and kill existing ComfyUI processes
@@ -102,7 +169,7 @@ cd /d %PROJECT_DIR%
 :: STEP 2: Start Flask Web Server (Frontend)
 :: ========================================
 echo.
-echo [2/2] Starting Flask Web Server (Frontend)...
+echo [3/3] Starting Flask Web Server (Frontend)...
 echo ========================================
 
 :: Check if port 5000 is in use
@@ -122,7 +189,7 @@ echo Flask server startup initiated!
 :: SERVICES COMPLETE
 :: ========================================
 echo.
-echo [2/2] Services Complete - Ready to Launch
+echo [3/3] Services Complete - Ready to Launch
 echo ========================================
 
 :: ========================================
@@ -141,6 +208,13 @@ echo ========================================
 echo           LAUNCH SUMMARY
 echo ========================================
 echo.
+
+:: Display Ollama status
+if !OLLAMA_RUNNING!==1 (
+    echo [OK] Ollama - LLM - Started / available on port 11434
+) else (
+    echo [FAIL] Ollama - LLM - Not started. Start it manually to avoid connection errors.
+)
 
 :: Display ComfyUI status
 if !COMFYUI_RUNNING!==1 goto comfyui_ok
@@ -164,7 +238,7 @@ echo ========================================
 echo           IMPORTANT NOTES
 echo ========================================
 echo.
-echo 1. Keep all command windows open while using the application
+echo 1. Keep all command windows open (Ollama, ComfyUI, Flask) while using the application
 echo 2. The Flask server will be accessible at: http://127.0.0.1:5000
 echo 3. Generated images are cached in static/images/ for faster loading
 echo 4. To stop all services, close all the opened command windows

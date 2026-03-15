@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, session, jsonify
+from flask import Flask, render_template, request, session, jsonify, redirect
 import webbrowser
 import threading
 import os
@@ -103,9 +103,16 @@ def generate_image_async(scene_text, scene_id):
         pending_images[scene_id] = None
 
 # === Routes ===
+@app.route("/restart", methods=["GET"])
+def restart():
+    """Clear session and redirect to start a new game."""
+    session.clear()
+    return redirect("/", code=302)
+
 @app.route("/", methods=["GET"])
 def index():
-    session.clear()
+    if 'player' not in session:
+        session.clear()
     if 'player' not in session:
         session['player'] = Player().__dict__
         session['history'] = []
@@ -132,21 +139,38 @@ def index():
         )
 
         session['history'] = [mmo_intro, {'role': 'user', 'content': initial_prompt}]
-        ai_intro_response = generate_response(session['history'])
+        try:
+            ai_intro_response = generate_response(session['history'])
+        except ConnectionError:
+            return render_template("ollama_error.html")
         session['history'].append({'role': 'assistant', 'content': ai_intro_response})
         session['player_status'] = "HP: 100/100 | MP: 50/50 | Lvl: 1 | Gear: Basic Sword"
 
     last_ai_msg = session['history'][-1]['content']
     scene_text = clean_scene_text(last_ai_msg)
     options = extract_options(last_ai_msg)
-    scene_image_url = get_scene_image(scene_text)
+
+    # First-scene image: use cache if present, else generate in background so page loads immediately
+    enhanced = enhance_image_prompt(scene_text)
+    scene_hash = sanitize_filename(enhanced)
+    cached_image_path = os.path.join(TARGET_DIR, f"{scene_hash}.png")
+    if os.path.exists(cached_image_path):
+        scene_image_url = f"/static/images/{scene_hash}.png"
+        initial_scene_id = None
+    else:
+        scene_image_url = ""
+        initial_scene_id = "scene_initial"
+        thread = threading.Thread(target=generate_image_async, args=(scene_text, initial_scene_id))
+        thread.daemon = True
+        thread.start()
 
     return render_template(
         "game.html",
         scene=scene_text,
         options=options,
         player_status=session['player_status'],
-        scene_image=scene_image_url
+        scene_image=scene_image_url,
+        initial_scene_id=initial_scene_id
     )
 
 @app.route("/make_choice", methods=["POST"])
@@ -161,7 +185,10 @@ def make_choice():
     # User typed free text
     if free_text:
         session['history'].append({'role': 'user', 'content': free_text})
-        ai_response = generate_response(session['history'][-(MAX_HISTORY+2):])
+        try:
+            ai_response = generate_response(session['history'][-(MAX_HISTORY+2):])
+        except ConnectionError:
+            return jsonify({"error": "ollama", "message": "Ollama is not running. Start Ollama or run launch_rpg_dungeon.bat, then retry."}), 503
         session['history'].append({'role': 'assistant', 'content': ai_response})
 
     # User clicked numbered option
@@ -171,7 +198,10 @@ def make_choice():
 
         if player_choice_text:
             session['history'].append({'role': 'user', 'content': player_choice_text})
-            ai_response = generate_response(session['history'][-(MAX_HISTORY+2):])
+            try:
+                ai_response = generate_response(session['history'][-(MAX_HISTORY+2):])
+            except ConnectionError:
+                return jsonify({"error": "ollama", "message": "Ollama is not running. Start Ollama or run launch_rpg_dungeon.bat, then retry."}), 503
             session['history'].append({'role': 'assistant', 'content': ai_response})
         else:
             return jsonify({

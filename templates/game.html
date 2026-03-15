@@ -82,6 +82,7 @@
     }
 
     const initialSceneImage = "{{ scene_image or '' }}";
+    const initialSceneId = "{{ initial_scene_id or '' }}";
     const initialPlayerStatus = "{{ player_status or 'HP: 100/100 | MP: 50/50 | Lvl: 1' }}";
 
     let isTyping = false;
@@ -95,8 +96,12 @@
       if (!audioEnabled || !('speechSynthesis' in window) || !text) return;
       
       setTimeout(() => {
-        // Stop any current speech
+        if (!audioEnabled) return;
+        // Stop any current speech and let the engine settle before speaking again
         speechSynthesis.cancel();
+        // Brief delay so synthesis is ready after cancel (fixes re-enable in some browsers)
+        setTimeout(() => {
+          if (!audioEnabled) return;
         
         // Clean text for better speech
         const cleanText = text
@@ -112,7 +117,7 @@
         if (!cleanText) return;
 
         const utterance = new SpeechSynthesisUtterance(cleanText);
-        utterance.rate = 1.0;
+        utterance.rate = 1.10;   // 1.0 = normal; increase to speed up (e.g. 1.2–1.4)
         utterance.pitch = 1.0;
         utterance.volume = 0.7;
         
@@ -149,6 +154,7 @@
         }
         
         speechSynthesis.speak(utterance);
+        }, 80);
       }, delay);
     }
 
@@ -287,42 +293,16 @@ function updateScene(sceneText, options, sceneId, playerStatus) {
     updatePlayerStatus(playerStatus);
     currentSceneId = sceneId;
 
-    // Start checking for image immediately (don't wait for text to finish)
-    let imageReady = false;
-    let imageUrl = null;
-    let textFinished = false;
-    
-    // Function to show image and choices when both are ready
-    function showImageAndChoices() {
-        if (textFinished && imageReady && imageUrl) {
-            showSceneImage(imageUrl, () => updateChoices(options));
-        } else if (textFinished && !sceneId) {
-            // No image needed
-            updateChoices(options);
-        } else if (textFinished && sceneId && !imageReady) {
-            // Text finished but image not ready yet - check more frequently (100ms)
-            checkImageReady(sceneId, imgUrl => {
-                imageReady = true;
-                imageUrl = imgUrl;
-                showSceneImage(imgUrl, () => updateChoices(options));
-            }, 100);
-        }
-    }
-    
-    if(sceneId) {
-        // Start polling for image right away (parallel with text typing)
-        checkImageReady(sceneId, imgUrl => {
-            imageReady = true;
-            imageUrl = imgUrl;
-            showImageAndChoices(); // Show if text is already done
-        });
-    }
-
-    // Start typing with original speed (45ms per character)
+    // Type text first; only after typing is done, show image then choices
     typeSceneText(sceneText, () => {
-        // Text finished
-        textFinished = true;
-        showImageAndChoices(); // Show image if ready, or wait for it
+        if (sceneId) {
+            checkImageReady(sceneId, imgUrl => {
+                if (imgUrl) showSceneImage(imgUrl, () => updateChoices(options));
+                else updateChoices(options);
+            });
+        } else {
+            updateChoices(options);
+        }
     });
 }
 
@@ -344,8 +324,16 @@ function updateScene(sceneText, options, sceneId, playerStatus) {
         method:'POST',
         headers:{'Content-Type':'application/json'},
         body: JSON.stringify({choice:choiceNum})
-      }).then(res=>res.json()).then(data=>{
-        updateScene(data.scene, data.options, data.scene_id, data.player_status);
+      }).then(res=>res.json().then(data=>{
+        if (!res.ok && data.error === 'ollama') {
+          alert(data.message || 'Ollama is not running. Start Ollama or run launch_rpg_dungeon.bat, then retry.');
+          window.location.href = "{{ url_for('index') }}";
+          return null;
+        }
+        if (!res.ok) throw new Error(data.message || 'Request failed');
+        return data;
+      })).then(data=>{
+        if (data) updateScene(data.scene, data.options, data.scene_id, data.player_status);
       }).catch(e=>console.error('Choice submission error:', e));
     }
 
@@ -369,10 +357,20 @@ function updateScene(sceneText, options, sceneId, playerStatus) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ free_text: text })
       })
-      .then(res => res.json())
+      .then(res => res.json().then(data => {
+        if (!res.ok && data.error === 'ollama') {
+          alert(data.message || 'Ollama is not running. Start Ollama or run launch_rpg_dungeon.bat, then retry.');
+          window.location.href = "{{ url_for('index') }}";
+          return null;
+        }
+        if (!res.ok) throw new Error(data.message || 'Request failed');
+        return data;
+      }))
       .then(data => {
-        updateScene(data.scene, data.options, data.scene_id, data.player_status);
-        document.getElementById("customInput").value = "";
+        if (data) {
+          updateScene(data.scene, data.options, data.scene_id, data.player_status);
+          document.getElementById("customInput").value = "";
+        }
       })
       .catch(e => console.error('Free text submission error:', e));
     }
@@ -391,11 +389,18 @@ function updateScene(sceneText, options, sceneId, playerStatus) {
 
       updatePlayerStatus(initialPlayerStatus);
       
-      // Type the initial scene text with original speed
+      // Type text first; only after typing is done, show image then choices
       typeSceneText(initialSceneText, () => {
-        
-        // Show initial image and choices
-        showSceneImage(initialSceneImage, () => updateChoices(initialOptions));
+        if (initialSceneImage) {
+          showSceneImage(initialSceneImage, () => updateChoices(initialOptions));
+        } else if (initialSceneId) {
+          checkImageReady(initialSceneId, imgUrl => {
+            if (imgUrl) showSceneImage(imgUrl, () => updateChoices(initialOptions));
+            else updateChoices(initialOptions);
+          });
+        } else {
+          updateChoices(initialOptions);
+        }
       });
     });
 
@@ -472,6 +477,9 @@ function updateScene(sceneText, options, sceneId, playerStatus) {
         
         if (!audioEnabled && 'speechSynthesis' in window) {
           speechSynthesis.cancel();
+        } else if (audioEnabled && 'speechSynthesis' in window) {
+          // Reset synthesis after re-enabling so next speak() works (fixes some browsers)
+          speechSynthesis.getVoices();
         }
       });
       
@@ -479,7 +487,7 @@ function updateScene(sceneText, options, sceneId, playerStatus) {
         if ('speechSynthesis' in window) speechSynthesis.cancel();
         if (ambientMusic && ambientMusic.pause) ambientMusic.pause();
         if (ambientMusic && ambientMusic.stop) ambientMusic.stop();
-        window.location.href = "/";
+        window.location.href = "{{ url_for('restart') }}";
       });
       
       settingsBtn.addEventListener('click', () => {
