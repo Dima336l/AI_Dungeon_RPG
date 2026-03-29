@@ -49,3 +49,4 @@ Share the public URL from ngrok to let others play.
 - Keep your PC running during demo
 - Free ngrok URLs change each session
 - Generated images are cached in `static/images` to speed up repeated scenes
+ 

@@ -12,10 +12,21 @@ body {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   align-items: center;
   position: relative;
   text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00;
+}
+
+/* Fills space under the title; centers the monitor the same way whether the footer is visible or not */
+.main-content {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
 }
 
 /* ===== HEADER ===== */
@@ -31,10 +42,10 @@ header, .page-title {
 /* ===== MONITOR FRAME ===== */
 .monitor-frame {
   position: relative;
-  width: 800px;
-  height: 600px;
+  width: 880px;
+  height: 660px;
   background-color: black;
-  margin-top: 310px;
+  margin-top: 0;
 }
 
 .monitor-img {
@@ -323,6 +334,7 @@ h1 {
 /* ===== CONTENT AREA ===== */
 #content-area {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -363,21 +375,14 @@ h1 {
 
 #scene-image-container img {
   max-width: 100%;
-  max-height: 550px;
+  max-height: 605px;
   width: auto;
   height: auto;
   border: 2px solid #00ff00;
   border-radius: 5px;
   box-shadow: 0 0 15px rgba(0, 255, 0, 0.3);
-  opacity: 0;
-  transform: scale(0.9);
-  transition: all 0.5s ease-in-out;
-  object-fit: contain;
-}
-
-#scene-image-container img.show {
   opacity: 1;
-  transform: scale(1);
+  object-fit: contain;
 }
 
 /* ===== CHOICES ===== */
@@ -476,8 +481,21 @@ h1 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-top: auto;
+  flex-shrink: 0;
   padding: 10px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* Keep layout height stable: no display:none (that removed the old margin-top:auto anchor). */
+.footer.footer-hidden {
+  visibility: hidden;
+  pointer-events: none;
+  height: 0;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
 }
 
 #footer-buttons {

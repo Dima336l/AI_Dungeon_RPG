@@ -75,13 +75,12 @@
     </div>
   </div>
 
-  <!-- Footer -->
-  <div class="footer">
+  <!-- Footer: hidden until the story starts (see runStartAdventure) -->
+  <div class="footer footer-hidden" id="game-footer">
     <div id="footer-buttons">
-      <button id="music-toggle">🎵 Music ON</button>
-      <button id="audio-toggle">🔊 Narration ON</button>
+      <button id="music-toggle">🎵 Music OFF</button>
+      <button id="audio-toggle">🔊 Narration OFF</button>
       <button id="restart-btn">🔄 Restart</button>
-      <button id="settings-btn">⚙️ Settings</button>
     </div>
   </div>
 
@@ -119,10 +118,13 @@
     const initialSceneImage = "{{ scene_image or '' }}";
     const initialSceneId = "{{ initial_scene_id or '' }}";
     const initialPlayerStatus = "{{ player_status or 'Story: Chapter 1' }}";
+    const SOUNDTRACK_URL = {{ soundtrack_music_url|tojson }};
 
     let isTyping = false;
     let currentSceneId = null;
-    let audioEnabled = true;
+    /** Full text of the current scene (for re-speaking after toggling narration back on). */
+    let currentSceneFullText = '';
+    let audioEnabled = false;
     let musicEnabled = false;
     let music = null;
 
@@ -132,11 +134,17 @@
       
       setTimeout(() => {
         if (!audioEnabled) return;
+        try {
+          if (speechSynthesis.paused) speechSynthesis.resume();
+        } catch (e) {}
         // Stop any current speech and let the engine settle before speaking again
         speechSynthesis.cancel();
-        // Brief delay so synthesis is ready after cancel (fixes re-enable in some browsers)
+        // Brief delay so synthesis is ready after cancel (fixes re-enable in Chrome/Edge/Safari)
         setTimeout(() => {
           if (!audioEnabled) return;
+          try {
+            if (speechSynthesis.paused) speechSynthesis.resume();
+          } catch (e) {}
         
         // Clean text for better speech
         const cleanText = text
@@ -189,7 +197,7 @@
         }
         
         speechSynthesis.speak(utterance);
-        }, 80);
+        }, 120);
       }, delay);
     }
 
@@ -228,6 +236,7 @@
 function typeSceneText(sceneText, callback, typingDelay = 45) {
     const sceneDiv = document.getElementById('scene-text');
     if (!sceneText) sceneText = "The adventure continues...";
+    currentSceneFullText = sceneText;
 
     sceneDiv.textContent = '\u200B';
     sceneDiv.classList.add('typing-cursor');
@@ -266,17 +275,35 @@ function typeSceneText(sceneText, callback, typingDelay = 45) {
       const container = document.getElementById('scene-image-container');
       container.innerHTML = '';
       const img = document.createElement('img');
-      img.src = sceneImageUrl;
       img.alt = 'Scene image';
-      img.onload = () => setTimeout(() => { 
-        img.classList.add('show'); 
-        if(callback) setTimeout(callback,600); 
-      },100);
-      img.onerror = () => { 
-        console.log('Image failed to load:', sceneImageUrl); 
-        if(callback) setTimeout(callback,100); 
-      };
+      img.loading = 'eager';
+      img.decoding = 'async';
+
+      let done = false;
+      function finish() {
+        if (done) return;
+        done = true;
+        if (callback) setTimeout(callback, 400);
+      }
+      function fail() {
+        if (done) return;
+        done = true;
+        container.innerHTML = '';
+        console.warn('Image failed to load:', sceneImageUrl);
+        if (callback) setTimeout(callback, 100);
+      }
+
+      img.onload = () => finish();
+      img.onerror = () => fail();
       container.appendChild(img);
+      img.src = sceneImageUrl;
+
+      // Already in cache: show now; rAF catches some browsers that set dimensions one frame late
+      function tryEarlyFinish() {
+        if (!done && img.complete && img.naturalWidth > 0) finish();
+      }
+      tryEarlyFinish();
+      requestAnimationFrame(tryEarlyFinish);
     }
 
     // === Image Polling ===
@@ -285,8 +312,12 @@ function typeSceneText(sceneText, callback, typingDelay = 45) {
       fetch(`/get_image/${sceneId}`)
         .then(res => res.json())
         .then(data => {
-          if (data.ready && data.image_url) callback(data.image_url);
-          else setTimeout(() => checkImageReady(sceneId, callback, pollInterval), pollInterval);
+          if (data.ready) {
+            // Generation finished (url may be null if ComfyUI failed)
+            callback(data.image_url || null);
+          } else {
+            setTimeout(() => checkImageReady(sceneId, callback, pollInterval), pollInterval);
+          }
         })
         .catch(e=>{ console.error('Image check error:', e); callback(null); });
     }
@@ -365,6 +396,11 @@ function updateScene(sceneText, options, sceneId, playerStatus) {
           window.location.href = "{{ url_for('index') }}";
           return null;
         }
+        if (!res.ok && data.error === 'session_lost') {
+          alert(data.message || 'Session expired. The page will reload.');
+          window.location.reload();
+          return null;
+        }
         if (!res.ok) throw new Error(data.message || 'Request failed');
         return data;
       })).then(data=>{
@@ -398,6 +434,11 @@ function updateScene(sceneText, options, sceneId, playerStatus) {
           window.location.href = "{{ url_for('index') }}";
           return null;
         }
+        if (!res.ok && data.error === 'session_lost') {
+          alert(data.message || 'Session expired. The page will reload.');
+          window.location.reload();
+          return null;
+        }
         if (!res.ok) throw new Error(data.message || 'Request failed');
         return data;
       }))
@@ -419,6 +460,9 @@ function updateScene(sceneText, options, sceneId, playerStatus) {
 
     // === Start adventure (run on button click or automatically when returning from start chooser) ===
     function runStartAdventure() {
+      const gameFooter = document.getElementById('game-footer');
+      if (gameFooter) gameFooter.classList.remove('footer-hidden');
+
       const startBtn = document.getElementById('start-btn');
       const pageEl = document.getElementById('page');
       if (startBtn) startBtn.style.display = 'none';
@@ -456,18 +500,18 @@ function updateScene(sceneText, options, sceneId, playerStatus) {
       const musicBtn = document.getElementById('music-toggle');
       const audioBtn = document.getElementById('audio-toggle');
       const restartBtn = document.getElementById('restart-btn');
-      const settingsBtn = document.getElementById('settings-btn');
       
-      if(!musicBtn || !audioBtn || !restartBtn || !settingsBtn) {
+      if (!musicBtn || !audioBtn || !restartBtn) {
         console.error('Some footer buttons not found');
         return;
       }
       
-      let musicPlaying = true;  // On by default, like narration
+      let musicPlaying = false;
       let ambientMusic = null;
       
       function checkMusicFile() {
-        return fetch("{{ url_for('static', filename='music.mp3') }}", {method: 'HEAD'})
+        if (!SOUNDTRACK_URL) return Promise.resolve(false);
+        return fetch(SOUNDTRACK_URL, { method: 'HEAD' })
           .then(response => response.ok)
           .catch(() => false);
       }
@@ -482,7 +526,7 @@ function updateScene(sceneText, options, sceneId, playerStatus) {
         const musicExists = await checkMusicFile();
         if (musicExists) {
           try {
-            ambientMusic = new Audio("{{ url_for('static', filename='music.mp3') }}");
+            ambientMusic = new Audio(SOUNDTRACK_URL);
             ambientMusic.loop = true;
             ambientMusic.volume = 0.4;
             await ambientMusic.play();
@@ -519,8 +563,12 @@ function updateScene(sceneText, options, sceneId, playerStatus) {
         if (!audioEnabled && 'speechSynthesis' in window) {
           speechSynthesis.cancel();
         } else if (audioEnabled && 'speechSynthesis' in window) {
-          // Reset synthesis after re-enabling so next speak() works (fixes some browsers)
+          try {
+            if (speechSynthesis.paused) speechSynthesis.resume();
+          } catch (e) {}
           speechSynthesis.getVoices();
+          const t = (currentSceneFullText || '').trim();
+          if (t) speakText(t, 0);
         }
       });
       
@@ -529,24 +577,6 @@ function updateScene(sceneText, options, sceneId, playerStatus) {
         if (ambientMusic && ambientMusic.pause) ambientMusic.pause();
         if (ambientMusic && ambientMusic.stop) ambientMusic.stop();
         window.location.href = "{{ url_for('restart') }}";
-      });
-      
-      settingsBtn.addEventListener('click', () => {
-        const speechAvailable = 'speechSynthesis' in window;
-        const voiceCount = speechAvailable ? speechSynthesis.getVoices().length : 0;
-        
-        const settings = `Audio Settings:
-• Narration: ${audioEnabled ? 'ON' : 'OFF'}
-• Music: ${musicPlaying ? 'ON' : 'OFF'}
-• Speech Synthesis: ${speechAvailable ? 'Available' : 'Not Available'}
-• Voices Available: ${voiceCount}
-
-Controls:
-• Click narration button to toggle voice
-• Music uses simple ambient tones
-• Restart to reset everything`;
-        
-        alert(settings);
       });
     })();
 
