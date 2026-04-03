@@ -1,0 +1,207 @@
+Meeting 4: The First Coursework
+CST3990 Undergraduate Individual Projects
+Can Başkent
+Department of Computer Science, Middlesex University, London
+c.baskent@mdx.ac.uk canbaskent.net/logic
+Overview of Today’s Session
+1. The Proposal
+2. Ethics Approval
+3. The Literature Review
+1/19
+The Proposal
+The Proposal
+A project proposal is a brief description of what you intend to do.
+Typically, a project proposal is only a few pages long.
+On these few pages you need to introduce the reader to the
+• subject area: What is the topic and scope of your project?
+• aim: What is the goal of your project?
+• arguments: Why is it important to investigate the chosen topic?
+• objectives Preliminary ideas for how you intend to achieve the
+aim.
+2/19
+Choosing a Subject Area
+Here is a roadmap for choosing a subject area for your project.
+3/19
+How to Choose a Subject Area
+Start early Start thinking about possible subject areas early, and let
+the decision regarding the chosen area of study be refined
+incrementally. In this way, you can avoid hastily made decisions that
+are not well motivated.
+Another benefit of starting early is that before the project begins,
+you may have time to identify and check important sources of
+information. The time it takes to, for example, identify and order
+literature or discuss a proposal with members of staff, should not be
+underestimated.
+4/19
+How to Choose a Subject Area
+Which subject area to choose is a decision that only you can make;
+nobody else will make this decision for you.
+• One of the most crucial factors for succeding with a project is
+the motivation for undertaking the work in the chosen subject
+area. You should strive to choose the subject area that you are
+most interested in.
+• Choose a subject area where you have the necessary skills. Do
+not choose a subject area in which, for example, you have failed
+courses.
+• A combination of areas is usually a good source of interesting
+problems and topics for project proposals. At the same time, it
+is not recommended that you choose a project which combines
+more than two areas, since they can become too complex to
+handle.
+5/19
+How to Choose a Subject Area
+Ask yourself whether you
+• have previously in your studies encountered subject areas or
+courses that you felt were especially interesting,
+• would like to work within a particular subject area in the future
+6/19
+How to Choose a Problem to Focus on
+Once you have found a subject area for your project, it is time to
+focus your interests within the chosen area.
+You focus your interest by identifying a problem within the subject
+area that you would like to explore.
+7/19
+How to Choose a Problem to Focus on
+Here are some ways to identify a problem within the subject area:
+• Ask yourself what you would like to do within a particular area
+(or what you can do, given your current knowledge).
+• Read the literature, since others may have already identified and
+reported the issues that are worthwhile to explore. You may
+even find that somebody else has already done what you were
+planning to do. In this situation you can adjust your aim, so that
+it targets something that other information sources do not cover.
+• Ask potential supervisors early. Frequently, project proposals
+will be in the context of the supervisor’s own professional
+research areas. This may increase the likelihood that he or she
+will be highly motivated to act as a supervisor for the project.
+• Ask companies and organisations, as they may have
+encountered problems that they do not have time, knowledge or
+resources to investigate themselves and discuss them with a
+potential supervisor in your department. 8/19
+How to Choose a Problem to Focus on
+Your initial ideas can be further refined by asking yourself – what
+type of project would I really like to do?
+Should it be, for example,
+• a descriptive project,
+• a theory oriented project,
+• an applied project,
+• a comparison of theory and practice?
+Keep in mind that most thesis projects use elements from more than
+one of the above categories.
+9/19
+References
+By properly referencing the material your work is based upon, you
+achieve several things.
+You will then be able to
+• show how your work extends the current state-of-the-art
+knowledge in the area,
+• show the originality of your work,
+• give credit to other people’s work (and thereby avoid being
+accused of plagiarism),
+• support and validate arguments made in your report (any claim
+made in the report must be supported either by your own
+research or by citing results published by other people),
+• show that you are familiar with the work done in the area.
+10/19
+References
+By simply looking at your reference list, an experienced reader or
+reviewer will see whether you have used references from well known
+sources, or sources that are not of such good quality.
+Furthermore, you can strengthen your arguments in the report if you
+base them on well known references which have been published in
+high-quality scientific journals, or in proceedings from renowned
+conferences.
+Another reason why references are needed is to make your work
+reproducible. Anyone who reads your report should be able to
+reproduce your work, and therefore all sources you have used must
+be clearly identified.
+11/19
+Citations
+Make sure that you are aware of how to make citations and
+referencing styles.
+12/19
+Ethics Approval
+Ethics Approval
+You must have a conversation with your supervisor as soon as
+possible in the development of your project regarding the ethical
+implication and cost of your project.
+If your project is low risk, your supervisor may sign it off by
+completing the above simple form. You will have to include that
+form in your second coursework submission.
+If your project is not low risk, you will have to apply for ethics
+approval. If you said ”YES” to any question in the Screening form, you
+must apply for the approval via the MOREform.
+If the project involves direct collection of data from people (or the
+usage of such data that has been already collected from human
+participants) then it is likely an ethical review is required.
+13/19
+The Literature Review
+Literature Analysis
+By literature analysis we mean a systematic examination of a
+problem, by means of an analysis of published sources, undertaken
+with a specific purpose in mind.
+With the problem and specific objective established, i.e. what should
+be analysed, the next problem concerns appropriate use of relevant
+sources.
+14/19
+Literature Analysis
+You may use a combination of the following, in order to ensure that
+you have considered all relevant sources:
+• Bibliographic databases: By searching or browsing their content
+using a sensible strategy, e.g. by using a set of keywords which
+your background reading and problem statement have identified
+as potentially relevant, by using a reference to a given source
+and locating additional sources
+• Journals and conference proceedings: By browsing the table of
+contents in conference proceedings, or by searching for relevant
+articles using the search function at a journal’s web site.
+15/19
+Literature Analysis
+A related difficulty is that of completeness. One of the difficulties in
+a literature analysis is to know when one has collected enough
+material. In other words, at what stage should you stop collecting
+material?
+Finally, expert opinions, such as your supervisor’s, can be of great
+help in ensuring that your intended strategy is feasible.
+It may be that at certain points in the process, depending on what
+emerges, you need to reconsider your strategy and try other
+techniques for ensuring relevance and completeness. In these
+situations, it is good to have someone monitoring your progress;
+someone who will be able to help by suggesting planned or
+unplanned deviations. If you do deviate from your plan, you should
+be able to give good reasons for doing so.
+16/19
+The First Steps
+The deadline for the First Coursework is in Week 5. We expect you
+develop some ideas towards your main goal in your project by then.
+You should then introduce them in your First Coursework.
+17/19
+Structure of Your First Coursework
+Briefly, your First Coursework should have the following sections:
+1. Introduction
+2. Motivation
+3. Literature Review
+4. First Steps
+5. Ethics Forms: screening form (and Ethics Monitor form, if
+applicable)
+18/19
+References
+These slides are based on our textbook
+Mikael Berndtsson & Jörgen Hansson & Björn Olsson & Björn
+Lundell, Thesis Projects: A Guide for Students in Computer Science
+and Information Systems, Second Edition, Springer, 2008.
+19/19
+Thank you!
+19/19
+
+
+he First Coursework is a formal piece of writing. It is supposed to have three parts.
+The first part, the proposal, will be composed of a few pages and explain the aim of the
+project: why it matters, how it can be motivated. The second part, the literature review,
+will be a substantial review of the state of the art in the area. Even if you are carrying
+out a software-based project, you will scan the literature and write a critical review. The
+third and the final part is what we call “first-steps”. There you will talk about what you
+have achieved towards your goal so far.
+Also note that the first coursework must contain your ethics form – either the “Ethics
+Screening Form”, signed by your supervisor, or a copy of the submitted MORE form. It
+is part of the marking scheme of the first coursework as you can see in Section 9.

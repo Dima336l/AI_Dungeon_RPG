@@ -1,0 +1,60 @@
+{
+  "exported_at": "2026-03-29T10:01:29.233061+00:00",
+  "game": "fables",
+  "setup": {
+    "start_place": "seaside",
+    "character": "boy",
+    "companion": "dog"
+  },
+  "turn_count": 3,
+  "turns": [
+    {
+      "number": 1,
+      "scene_text": "In a sunny little town by the sea, where the sand is soft and squishy between your toes, our young hero, Timmy, is getting ready for an adventure! He's a happy boy with a big smile on his face. By his side is his best friend, a friendly golden dog named Max. They love exploring together.\n\nThe town is quiet in the morning, with only a few birds singing their sweet songs. The smell of freshly baked bread wafts from the bakery, making Timmy's tummy growl with hunger. He and Max walk along the beach, feeling the warm sand between their toes. The waves gently lap at the shore, creating a soothing sound.\n\nAs they stroll, Timmy looks out at the sea and sees a few sailboats bobbing on the water. He loves watching them glide across the waves. Max wags his tail, as if excited about the adventure too!\n\nHere are your options:\n\n\nWhich adventure will you choose for Timmy and his best friend, Max?",
+      "options_offered": {
+        "1": "Let's go explore the old lighthouse! It stands tall and proud on the hill overlooking the town.",
+        "2": "Visit Mrs. Jenkins' bakery for a yummy treat! She always has a special surprise waiting for Timmy and Max.",
+        "3": "Follow the path to the nearby forest! Rumor has it that hidden streams and secret glades await discovery."
+      },
+      "image_relative_url": null,
+      "image_filename": "In_a_sunny_little_town_by_the_sea_where_t_e1c3e07a.png",
+      "image_on_disk": false,
+      "image_generation_prompt_used": "In a sunny little town by the sea, where the sand is soft and squishy between your toes, our young hero, Timmy, is getting ready for an adventure! He's a happy boy with a big smile on his face. By his side is his best friend, a friendly golden dog named Max. They love exploring together.\n\nThe town is quiet in the morning, with only a few birds singing their sweet songs.. children's storybook illustration, soft colors, warm lighting, kid-friendly fable",
+      "player_action": null,
+      "note": "Opening scene after setup (initial user message was combined start/character/companion prompt)",
+      "image_base64_png": null
+    },
+    {
+      "number": 2,
+      "scene_text": "What a great choice! The sun is shining brightly as Timmy and Max make their way up the hill to the old lighthouse. As they climb, the air grows a bit cooler and the scent of saltwater and seaweed fills their noses.\n\nThe lighthouse stands tall, its white tower gleaming against the blue sky. The door creaks slightly as Timmy pushes it open, revealing a cozy room filled with interesting objects and old nautical charts. Max sniffs around, curious about all the new smells.\n\nAt the top of the stairs, they reach the lantern room. The view from up here is simply breathtaking! The sea stretches out before them, with sailboats and ships sailing by. Timmy and Max can even spot a few seagulls soaring overhead, their cries carried on the ocean breeze.\n\nAs they take in the stunning view, Timmy notices something strange – a small, hidden compartment in the lantern room. It's filled with old treasures: shiny coins, colorful glass beads, and a tiny, intricately carved wooden box.\n\nHere are your options:\n\n\nWhat would you like to do next?",
+      "options_offered": {
+        "1": "Open the wooden box! What secrets will it hold?",
+        "2": "Explore the rest of the lighthouse! There might be more hidden treasures or interesting things to discover.",
+        "3": "Head back down to the town! The sun is starting to set, and Timmy and Max should probably get some dinner."
+      },
+      "image_relative_url": null,
+      "image_filename": "What_a_great_choice_The_sun_is_shining_br_8f4ba87d.png",
+      "image_on_disk": false,
+      "image_generation_prompt_used": "What a great choice! The sun is shining brightly as Timmy and Max make their way up the hill to the old lighthouse. As they climb, the air grows a bit cooler and the scent of saltwater and seaweed fills their noses.\n\nThe lighthouse stands tall, its white tower gleaming against the blue sky.. children's storybook illustration, soft colors, warm lighting, kid-friendly fable",
+      "player_action": "Let's go explore the old lighthouse! It stands tall and proud on the hill overlooking the town.",
+      "image_base64_png": null
+    },
+    {
+      "number": 3,
+      "scene_text": "Curiosity gets the better of you! Timmy carefully opens the small wooden box, and a faint whisper of sea air escapes. Inside, they find a beautiful, shimmering shell, perfectly preserved in its delicate curves. The shell seems to glow with an soft, gentle light.\n\nAs Timmy holds the shell up to the lantern's bright light, he notices that it starts to glow even brighter! The room begins to fill with a sweet, ocean-like fragrance, and the air is filled with the soft whispers of ancient secrets.\n\nSuddenly, a tiny, mischievous-looking sprite appears before them. She has delicate wings and hair as wild as the sea itself. The sprite introduces herself as Luna, guardian of the lighthouse's treasures and keeper of its secrets.\n\nLuna tells Timmy that the shell is a special gift, imbued with the magic of the sea. It will allow him to communicate with the creatures of the ocean, including those who live deep beneath the waves. But, she warns, this power comes with great responsibility – Timmy must use it wisely and always consider the well-being of all living things.\n\nHere are your options:\n\n\nWhat would you like to do next?",
+      "options_offered": {
+        "1": "Ask Luna more questions! What kind of magic can the shell do? How will it help him?",
+        "2": "Explore the lighthouse further! There might be more secrets or treasures to discover.",
+        "3": "Head back down to the town! Timmy should probably get some dinner and tell Max about their amazing discovery."
+      },
+      "image_relative_url": null,
+      "image_filename": "Curiosity_gets_the_better_of_you_Timmy_ca_dcec7934.png",
+      "image_on_disk": false,
+      "image_generation_prompt_used": "Curiosity gets the better of you! Timmy carefully opens the small wooden box, and a faint whisper of sea air escapes. Inside, they find a beautiful, shimmering shell, perfectly preserved in its delicate curves. The shell seems to glow with an soft, gentle light.\n\nAs Timmy holds the shell up to the lantern's bright light, he notices that it starts to glow even brighter!. children's storybook illustration, soft colors, warm lighting, kid-friendly fable",
+      "player_action": "Open the wooden box! What secrets will it hold?",
+      "image_base64_png": null
+    }
+  ],
+  "embed_images_included": true,
+  "saved_to_server_path": "C:\\Users\\nirca\\repos\\rpg_dungeon_ai\\eval_exports\\fables_eval_20260329_100129.json"
+}

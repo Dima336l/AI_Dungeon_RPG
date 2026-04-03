@@ -1,0 +1,30 @@
+{
+  "exported_at": "2026-03-28T16:01:42.444336+00:00",
+  "game": "fables",
+  "setup": {
+    "start_place": "village",
+    "character": "boy",
+    "companion": "cat"
+  },
+  "turn_count": 1,
+  "turns": [
+    {
+      "number": 1,
+      "scene_text": "In a cozy little village surrounded by a bright and cheerful forest, our young hero, Timmy, sets out on an exciting adventure with his best friend, a soft and fluffy cat named Whiskers by his side. The sun shines down upon them, casting a warm glow over the entire scene. The air is filled with the sweet scent of blooming flowers and the gentle chirping of birds.\n\nAs they walk along the winding path, they come across a small clearing with a babbling brook running through it. The water sparkles in the sunlight, and Whiskers can't help but dip her paw into the cool, clear water to take a refreshing drink.\n\nHere are Timmy's options:\n\n\nWhat will Timmy do next?",
+      "options_offered": {
+        "1": "Follow the brook: Timmy can decide to follow the brook as it flows gently through the forest, seeing where it might lead him.",
+        "2": "Explore the clearing: Timmy and Whiskers can explore the small clearing, looking for any interesting rocks or sticks that they might find.",
+        "3": "Head into the forest: Timmy can choose to head straight into the forest, using his sense of adventure to guide him on what wonders he might discover."
+      },
+      "image_relative_url": null,
+      "image_filename": null,
+      "image_on_disk": false,
+      "image_generation_prompt_used": "In a cozy little village surrounded by a bright and cheerful forest, our young hero, Timmy, sets out on an exciting adventure with his best friend, a soft and fluffy cat named Whiskers by his side. The sun shines down upon them, casting a warm glow over the entire scene.. children's storybook illustration, soft colors, warm lighting, kid-friendly fable",
+      "player_action": null,
+      "note": "Opening scene after setup (initial user message was combined start/character/companion prompt)",
+      "image_base64_png": null
+    }
+  ],
+  "embed_images_included": true,
+  "saved_to_server_path": "C:\\Users\\nirca\\repos\\rpg_dungeon_ai\\eval_exports\\fables_eval_20260328_160142.json"
+}

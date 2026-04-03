@@ -1,0 +1,90 @@
+================================================================================
+VIVA SLIDES — Fables (AI children's storytelling game)
+Based on: Coursework1_Report.tex | Dumitru Nirca | Target: ~15–20 slides for ~10–15 min
+Tip: Use each SLIDE TITLE as the slide headline (conclusion-first), bullets as prompts only.
+================================================================================
+
+SLIDE 1 — Title
+  Fables: local LLM + Stable Diffusion for interactive children's stories
+  Dumitru Nirca · Coursework 1 · Supervisor: Daniele Dell'Erba
+  [Optional: screenshot of game UI]
+
+SLIDE 2 — In one sentence, what I built
+  A browser game where kids pick setting/hero/companion, then get AI scenes + matching pictures—everything runs locally (no cloud APIs for generation).
+
+SLIDE 3 — Who it's for and why 5–9
+  Fables + short concrete scenes suit this age; illustrated choice-based play supports early reading; simple words and wholesome tone by design.
+
+SLIDE 4 — Core user loop (demo mental model)
+  Choose place → hero → companion → read scene (typed out) → choose option or free text → new scene + new image … repeat.
+
+SLIDE 5 — The main technical problem
+  Text is fast (~2–4 s); images are slow (~28 s on RTX 5090 in testing). Asymmetric latency breaks naïve “show everything at once” UX.
+
+SLIDE 6 — Stack architecture (high level)
+  Browser ↔ Flask orchestrates ↔ Ollama (Llama 3) for narrative ↔ ComfyUI (Anything v5 / SD) for images.
+  [Use report Fig: workflow or component interaction]
+
+SLIDE 7 — Sync strategy = read-then-see
+  Scene length pinned to ~600–700 chars; typing at 45 ms/char ≈ 27–32 s reading time, overlapping ~28 s image job; image revealed only after typing ends; client polls /get_image.
+
+SLIDE 8 — Why prompt length matters for UX
+  It's not just tone—fixed length makes animation duration predictable so image generation can hide behind “reading,” not idle waiting.
+
+SLIDE 9 — Image pipeline in brief
+  Story-led prompt: first ~1–2 sentences of scene + fixed “children's storybook…” suffix + negatives; MD5 cache (~15–20% hits); background thread + polling.
+
+SLIDE 10 — Session & safety (engineering + ethics)
+  Server-side history keyed from cookie; rolling last 6 exchanges (12 messages) for coherence/latency trade-off.
+  Soft rails: system prompt vocabulary/tone; image style suffix; no production-grade moderation layer (limitation).
+
+SLIDE 11 — Evaluation method
+  Six-turn playthrough exported; three independent LLM raters (GPT-4, Claude 3.5 Sonnet, Gemini); 1–5 scale on enjoyment, coherence, image quality, system responsiveness (incl. sync).
+
+SLIDE 12 — Main results (numbers)
+  Overall mean ≈ 4.0/5
+  Enjoyment ≈ 4.1/5 · Image quality ≈ 4.0/5 · System responsiveness ≈ 4.1/5 · Narrative coherence ≈ 3.6/5 (weakest)
+
+SLIDE 13 — What responsiveness scores mean here
+  For the scored session, raters got measured post-typing→image delays (~0); they’re not claiming hands-on lab UX for all runs.
+
+SLIDE 14 — Known failure modes
+  ~30% of broader tests: ComfyUI queue—new scene requested before prior image finishes → mistimed panels.
+  Coherence: bounded context → long-run drift / tonal spikes (e.g. aggressive free-text like “dragon”).
+
+SLIDE 15 — Research questions → answers (ultra short)
+  RQ1 Storyteller on consumer HW? Yes for short sessions; coherence is the limiter.
+  RQ2 Sync text+image? Prompt-timed typing + async image + polling.
+  RQ3 Performance? Image gen is bottleneck; cache helps a little.
+  RQ4 UX under slow gen? Occupy time with reading/animation, not blank wait.
+
+SLIDE 16 — Limitations (honest, examiner-friendly)
+  AI-only evaluation; single-player; no output classifier; free-text less coherent than structured choices; legal/IP considerations for SD if commercial.
+
+SLIDE 17 — Future work (pick 2–3 if asked)
+  Faster sampling (LCM / Turbo), RAG or rolling summary for context, pre-gen likely branches, explicit moderation, human study.
+
+SLIDE 18 — What I’d say in closing
+  Delivers playable local multimodal fables; shows latency can be masked when backend work overlaps active reading; documents real integration constraints.
+
+SLIDE 19 — Thank you / Questions
+  [QR or link to repo if allowed; GitHub handle]
+
+================================================================================
+ASSETS TO REUSE FROM THE REPORT (build slides faster)
+  - Figure: System workflow
+  - Figure: Component interaction sequence
+  - Evaluation figure strip (beach → bridge → …) if you have fig:eval_fables_a/b
+  - Small table: mean scores (enjoyment / coherence / image / responsiveness)
+
+TIMING CHEATS
+  ~10 min talk → aim ~12–15 slides; skip 14–15 detail or merge 11–12.
+  ~15 min → use full deck; add one live demo or 30s screen recording if allowed.
+
+ANTICIPATED QUESTIONS (one-line answers to rehearse)
+  Why local not cloud? Cost, privacy, latency stacking; trade-off: smaller model than GPT-4.
+  Is 3.6 coherence “bad”? Lowest dimension but expected with 6-message window; mitigations named above.
+  Generalisable? Template for local multimodal games; not a production child product without moderation.
+  Fair use of AI evaluators? Limitation acknowledged; good for scale/consistency, not substitute for children/parents.
+
+================================================================================
